@@ -689,12 +689,6 @@ create_rhs_from_solid_particles_closest_point_fast(
       // Construct a nearest-neighbor search for each stencil point, looking for 1
       // nearest point
       dealii::ArborXWrappers::PointNearestPredicate bb_near(quadrature_points, 1);
-#else
-      AssertThrow(false,
-                  dealii::ExcMessage("deal.II is not set up with Arborx, which is a prerequisite "
-                                     "for using the \"quadrature_point_fast\" algorithm!"));
-#endif
-
       // Perform nearest neighbor search; returns matching local indices of particle
       // points and owning ranks
       const auto &[indices_and_ranks, offsets_stencil] = distributed_tree.query(bb_near);
@@ -740,7 +734,6 @@ create_rhs_from_solid_particles_closest_point_fast(
       unsigned int idx = 0;
 
       AssertThrow(ghosted_properties.size() == quadrature_points.size(), ExcNotImplemented());
-
       // 3) assign values
       matrix_free.template cell_loop<VectorType, VectorType>(
         [&](const auto &data, auto &dst, const auto & /*src*/, const auto cell_range) {
@@ -770,6 +763,11 @@ create_rhs_from_solid_particles_closest_point_fast(
         rhs,
         dummy,
         zero_out);
+#else
+      AssertThrow(false,
+                  dealii::ExcMessage("deal.II is not set up with Arborx, which is a prerequisite "
+                                     "for using the \"quadrature_point_fast\" algorithm!"));
+#endif
     }
 
   if (enable_memory_stats)
