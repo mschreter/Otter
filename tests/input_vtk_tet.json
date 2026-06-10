@@ -1,0 +1,11 @@
+{
+  "screening length": "150",
+  "mesh": "mesh/tet4_coarse.vtk",
+  "n refinements": "1",
+  "enable gmg": "false",
+  "particle file": "mesh/allPoints_sampleFac100.xyz",
+  "dim": "3",
+  "degree": "1",
+  "output name": "tet4_coarse_screening150_degree1_sampleFac100",
+  "use simplex mesh": "true"
+}

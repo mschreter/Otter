@@ -1,0 +1,6 @@
+#!/bin/sh
+
+# format code files
+for i in $(find . -type f \( -name "*.hpp" -o -name "*.cc" -o -name "*.cpp" \) -not -path "./build*" ); do
+  clang-format -i $i &
+done
