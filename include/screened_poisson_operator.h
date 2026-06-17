@@ -18,13 +18,6 @@
 
 using namespace dealii;
 
-inline bool
-ends_with(const std::string &str, const std::string &suffix)
-{
-  return str.size() >= suffix.size() &&
-         str.compare(str.size() - suffix.size(), suffix.size(), suffix) == 0;
-}
-
 template <int dim, typename Number, typename VectorizedArrayType = VectorizedArray<Number>>
 class ScreenedPoissonOperator : public Subscriptor
 {
@@ -243,6 +236,30 @@ public:
         this->valid_system = true;
       }
   }
+
+const VectorType&
+get_diagonal() const
+{
+  initialize_diagonal();
+  return diagonal;
+}
+
+void
+initialize_diagonal() const
+{
+  diagonal.reinit(matrix_free.get_vector_partitioner());
+
+  MatrixFreeTools::compute_diagonal(
+    matrix_free,
+    diagonal,
+    &ScreenedPoissonOperator<dim,
+                             Number,
+                             VectorizedArrayType>::do_vmult_cell_single,
+    this);
+
+  diagonal.compress(VectorOperation::insert);
+}
+
   const MatrixFree<dim, Number, VectorizedArrayType> &
   get_matrix_free()
   {
@@ -287,5 +304,6 @@ private:
   }
 
   mutable TrilinosWrappers::SparseMatrix system_matrix;
+  mutable VectorType                     diagonal;
   mutable bool                           valid_system;
 };

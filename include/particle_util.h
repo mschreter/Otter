@@ -68,6 +68,7 @@ get_particles_and_properties(std::string    particle_data_file,
                              char           delimiter        = ' ',
                              const MPI_Comm mpi_communicator = MPI_COMM_WORLD)
 {
+  dealii::ConditionalOStream pcout(std::cout, dealii::Utilities::MPI::this_mpi_process(mpi_communicator) == 0);
   // Make global particle properties vector
   std::vector<dealii::Point<dim, Number>> particle_locations;
   std::vector<std::vector<Number>>        properties{};
@@ -76,7 +77,6 @@ get_particles_and_properties(std::string    particle_data_file,
   // TODO: make parallel
   if (dealii::Utilities::MPI::this_mpi_process(mpi_communicator) == 0)
     {
-      std::cout << "Start to process the particle data file: " << particle_data_file << std::endl;
       // TODO: create read_xyz function
       if (particle_data_file.ends_with(".xyz"))
         {
@@ -119,11 +119,8 @@ get_particles_and_properties(std::string    particle_data_file,
       else
         AssertThrow(false, dealii::ExcMessage("Only *.xyz or *.tif files supported."));
 
-      std::cout << "Total Number of properties read: " << properties.size() << std::endl;
+print_entry(pcout, "Properties read", properties.size());
     }
-
-  if (dealii::Utilities::MPI::this_mpi_process(mpi_communicator) == 0)
-    std::cout << "Particle file read and stored into vectors. " << std::endl;
 
   return {particle_locations, properties};
 }
@@ -632,9 +629,8 @@ create_rhs_from_solid_particles_closest_point_fast(
         properties.resize(write);
       }
 
-      if (dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
-        std::cout << "number of particles reduced to bounding box: " << particle_locations.size()
-                  << std::endl;
+  dealii::ConditionalOStream pcout(std::cout, dealii::Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0);
+      print_entry(pcout, "Data points in bounding box: ", particle_locations.size());
 
       AssertThrow(properties.size() == particle_locations.size(),
                   dealii::ExcMessage(

@@ -1,0 +1,11 @@
+{
+  "screening length": "0.1",
+  "mesh": "./mesh/mesh.vtk",
+  "n refinements": "0",
+  "enable gmg": "false",
+  "particle file": "./data.csv",
+  "dim": "3",
+  "degree": "1",
+  "output name": "result",
+  "use simplex mesh": "true"
+}

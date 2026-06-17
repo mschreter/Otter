@@ -17,17 +17,11 @@
 #include <deal.II/numerics/data_out.h>
 
 #include <particle_util.h>
+#include <utils.h>
 
 #include <fstream>
 #include <iostream>
 #include <string>
-
-inline bool
-ends_with(const std::string &str, const std::string &suffix)
-{
-  return str.size() >= suffix.size() &&
-         str.compare(str.size() - suffix.size(), suffix.size(), suffix) == 0;
-}
 
 template <int dim, typename Number>
 void
@@ -41,43 +35,13 @@ test(std::string filename, std::string particle_file)
   int fe_degree              = 1;
   int max_particles_per_cell = 25;
   int n_refinements          = 1;
-  // parallel::distributed::Triangulation<dim> triangulation(
-  // MPI_COMM_WORLD,
-  // Triangulation<dim>::none,
-  // parallel::distributed::Triangulation<dim>::Settings::construct_multigrid_hierarchy);
-  //
+
   parallel::distributed::Triangulation<dim> triangulation(MPI_COMM_WORLD);
 
-  std::ifstream file(filename);
-  GridIn<dim>   grid_in;
-
+  GridIn<dim> grid_in;
 
   grid_in.attach_triangulation(triangulation);
-
-  if (ends_with(filename, ".ucd"))
-    {
-      std::cout << "Read ucd mesh: " << filename << std::endl;
-      grid_in.read_ucd(file);
-    }
-  else if (ends_with(filename, ".inp"))
-    {
-      std::cout << "Read mesh with abauqs: " << filename << std::endl;
-      grid_in.read_abaqus(file);
-    }
-  else if (ends_with(filename, ".vtk"))
-    {
-      std::cout << "Read mesh with vtk reader: " << filename << std::endl;
-      grid_in.read_vtk(file);
-    }
-  else if (ends_with(filename, ".msh"))
-    {
-      std::cout << "Read mesh with msh reader: " << filename << std::endl;
-      grid_in.read_msh(file);
-    }
-  else
-    {
-      AssertThrow(false, ExcMessage("GridIn function for requested mesh not found."));
-    }
+  grid_in.read(filename);
 
   triangulation.refine_global(n_refinements);
 
@@ -109,7 +73,7 @@ test(std::string filename, std::string particle_file)
   // APPROACH 1:
   dealii::Particles::ParticleHandler<dim> particle_handler;
   create_rhs_from_solid_particles<dim, Number, VectorType>(
-    rhs, particle_handler, mapping, triangulation, particle_file, matrix_free);
+    rhs, mapping, triangulation, particle_file, matrix_free, "particle.vtu", false, false);
 
   // APPROACH 2:
   if (false)
@@ -148,7 +112,8 @@ test(std::string filename, std::string particle_file)
         true);
     }
 
-  if (true)
+  // debug output
+  if (false)
     {
       dealii::Particles::DataOut<dim, dim> particle_output;
       std::vector<std::string>             solution_names(1, "value");
@@ -189,6 +154,5 @@ main(int argc, char **argv)
 {
   dealii::Utilities::MPI::MPI_InitFinalize mpi_initialization(argc, argv, 1);
 
-  // test<3, double>(SOURCE_DIR "/mesh/mesh_hex.inp", SOURCE_DIR "/mesh/solidPoints.xyz");
-  test<3, double>(SOURCE_DIR "/mesh/mesh_hex.inp", SOURCE_DIR "/mesh/allPoints.xyz");
+  test<3, double>(SOURCE_DIR "/mesh/mesh_hex.inp", SOURCE_DIR "/points/allPoints_sampleFac100.xyz");
 }

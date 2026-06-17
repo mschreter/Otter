@@ -1,43 +1,25 @@
-{
-    "compute L2 norm solution": "true",
-    "degree": "1",
-    "dim": "1",
-    "enable gmg": "false",
-    "enable wall time": "false",
-    "mesh": "hyper_cube",
-    "mesh arguments": "0.0:10.0:false",
-    "n refinements": "10",
-    "neumann bc": "true",
-    "output memory": "false",
-    "output name": "1D_2mm",
-    "output paraview": "true",
-    "output particles": "true",
-    "particle file": "",
-    "particle file is regular grid": "false",
-    "particle integration rhs": "particle",
-    "rhs function": "cos(x\/10*3.14159265359)",
-    "screening length": "2",
-    "use simplex mesh": "false",
-    "GMRES": {
-        "absolute tolerance": "1e-20",
-        "max iterations": "10000",
-        "relative tolerance": "0.0001"
-    },
-    "Multigrid": {
-        "coarse solver V-cycle steps": "1",
-        "coarse solver absolute tolerance": "1e-20",
-        "coarse solver max iterations": "10000",
-        "coarse solver relative tolerance": "0.0001",
-        "coarse solver smoother sweeps": "1",
-        "coarse solver smoother type": "ILU",
-        "coarse solver type": "direct",
-        "smoother degree": "5",
-        "smoother eigen CG iterations": "20",
-        "smoother smoothing range": "20",
-        "smoother type": "chebyshev"
-    }
-}
-Setup active operator
-Start linear solution procedure for number of DoFs: 1025
-|Solution|_l2 = 16.2387
-|solution|_L2 1.603164e+00
+┌───────────────────────────────────────────────────────────────┐
+│  🦦 Otter                                                     │
+│            ... transforms CT data into continuum properties   │
+└───────────────────────────────────────────────────────────────┘
+
+
+Problem setup
+───────────────────────────────────────────────────────────────
+ Dimension                           : 1
+ Degree                              : 1
+ Number of Finite Elements           : 2047
+ Number of DoFs                      : 1025
+
+Assembly of the right-hand side
+───────────────────────────────────────────────────────────────
+ Preconditioner                      : AMG
+
+Linear Solver
+───────────────────────────────────────────────────────────────
+ Iterations:                         : 1
+ ||u||l2                             : 16.2387
+
+Post-Processing
+───────────────────────────────────────────────────────────────
+ ||u||L2                             : 1.60316

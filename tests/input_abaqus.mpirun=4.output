@@ -1,40 +1,28 @@
-{
-    "compute error": "false",
-    "degree": "1",
-    "dim": "3",
-    "enable gmg": "false",
-    "enable wall time": "false",
-    "mesh": "..\/..\/HNEA01\/alphaWrap_15_300\/hex8_coarse.inp",
-    "n refinements": "1",
-    "output name": "hex8_coarse_screening150_degree1_sampleFac9",
-    "output paraview": "false",
-    "particle file": "allPoints_sampleFac9.xyz",
-    "screening length": "150",
-    "GMRES": {
-        "absolute tolerance": "1e-20",
-        "max iterations": "10000",
-        "relative tolerance": "0.0001"
-    },
-    "Multigrid": {
-        "coarse solver V-cycle steps": "1",
-        "coarse solver absolute tolerance": "1e-20",
-        "coarse solver max iterations": "10000",
-        "coarse solver relative tolerance": "0.0001",
-        "coarse solver smoother sweeps": "1",
-        "coarse solver smoother type": "ILU",
-        "coarse solver type": "direct",
-        "smoother degree": "5",
-        "smoother eigen CG iterations": "20",
-        "smoother smoothing range": "20",
-        "smoother type": "chebyshev"
-    }
-}
-Read abaqus mesh: ../../HNEA01/alphaWrap_15_300/hex8_coarse.inp
-Setup active operator
-Start to process the particle data file: allPoints_sampleFac9.xyz
-Total number of properties read: 965660
-Particle file read and stored into vectors. 
+┌───────────────────────────────────────────────────────────────┐
+│  🦦 Otter                                                     │
+│            ... transforms CT data into continuum properties   │
+└───────────────────────────────────────────────────────────────┘
+
+
+Problem setup
+───────────────────────────────────────────────────────────────
+ Dimension                           : 3
+ Degree                              : 1
+ Number of Finite Elements           : 24068
+ Number of DoFs                      : 49289
+
+Assembly of the right-hand side
+───────────────────────────────────────────────────────────────
+ Properties read                     : 965660
 Particles global insertion finished: 964082
-|RHS|_l2 = 2.3074e+06
-Start linear solution procedure for number of DoFs: 49289
-|Solution|_l2 = 132.982
+ ||RHS||l2                           : 2.3074e+06
+ Preconditioner                      : AMG
+
+Linear Solver
+───────────────────────────────────────────────────────────────
+ Iterations:                         : 17
+ ||u||l2                             : 132.982
+
+Post-Processing
+───────────────────────────────────────────────────────────────
+ ||u||L2                             : 16061.9

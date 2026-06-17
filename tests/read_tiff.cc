@@ -147,7 +147,7 @@ read_tiff(const std::string &filename,
 int
 main()
 {
-  auto xyzv = read_tiff<2>(SOURCE_DIR "/example.tif", 0.352778, 0.352778, 0.352778);
+  auto xyzv = read_tiff<2>(SOURCE_DIR "/points/example.tif", 0.352778, 0.352778, 0.352778);
 
   std::cout << "Read " << xyzv.size() << " points\n";
   if (!xyzv.empty())

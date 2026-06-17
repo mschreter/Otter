@@ -3,7 +3,7 @@
   "mesh": "mesh/hex8_coarse.inp",
   "n refinements": "1",
   "enable gmg": "false",
-  "particle file": "allPoints_sampleFac9.xyz",
+  "particle file": "points/allPoints_sampleFac9.xyz",
   "dim": "3",
   "degree": "1",
   "output paraview": "false",

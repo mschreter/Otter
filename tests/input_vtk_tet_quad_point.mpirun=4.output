@@ -1,42 +1,27 @@
-{
-    "compute error": "false",
-    "degree": "1",
-    "dim": "3",
-    "enable gmg": "false",
-    "enable wall time": "false",
-    "mesh": "mesh\/tet4_coarse.vtk",
-    "n refinements": "1",
-    "output memory": "false",
-    "output name": "tet4_coarse_screening150_degree1_sampleFac100",
-    "output paraview": "true",
-    "particle file": "mesh\/allPoints_sampleFac100.xyz",
-    "particle integration rhs": "quadrature_point",
-    "screening length": "150",
-    "use simplex mesh": "true",
-    "GMRES": {
-        "absolute tolerance": "1e-20",
-        "max iterations": "10000",
-        "relative tolerance": "0.0001"
-    },
-    "Multigrid": {
-        "coarse solver V-cycle steps": "1",
-        "coarse solver absolute tolerance": "1e-20",
-        "coarse solver max iterations": "10000",
-        "coarse solver relative tolerance": "0.0001",
-        "coarse solver smoother sweeps": "1",
-        "coarse solver smoother type": "ILU",
-        "coarse solver type": "direct",
-        "smoother degree": "5",
-        "smoother eigen CG iterations": "20",
-        "smoother smoothing range": "20",
-        "smoother type": "chebyshev"
-    }
-}
-Read vtk mesh: mesh/tet4_coarse.vtk
-Setup active operator
-Start to process the particle data file: mesh/allPoints_sampleFac100.xyz
-Total Number of properties read: 674
-Particle file read and stored into vectors. 
-|RHS|_l2 = 1.46038e+07
-Start linear solution procedure for number of DoFs: 1232
-|Solution|_l2 = 21.4078
+┌───────────────────────────────────────────────────────────────┐
+│  🦦 Otter                                                     │
+│            ... transforms CT data into continuum properties   │
+└───────────────────────────────────────────────────────────────┘
+
+
+Problem setup
+───────────────────────────────────────────────────────────────
+ Dimension                           : 3
+ Degree                              : 1
+ Number of Finite Elements           : 6183
+ Number of DoFs                      : 1232
+
+Assembly of the right-hand side
+───────────────────────────────────────────────────────────────
+ Properties read                     : 674
+ ||RHS||l2                           : 1.46038e+07
+ Preconditioner                      : AMG
+
+Linear Solver
+───────────────────────────────────────────────────────────────
+ Iterations:                         : 1
+ ||u||l2                             : 21.4078
+
+Post-Processing
+───────────────────────────────────────────────────────────────
+ ||u||L2                             : 16173.7

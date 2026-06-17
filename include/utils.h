@@ -2,6 +2,36 @@
 #include <deal.II/base/mpi.h>
 #include <deal.II/base/point.h>
 
+void
+print_banner(const dealii::ConditionalOStream &pcout)
+{
+  pcout
+    << "┌───────────────────────────────────────────────────────────────┐\n"
+    << "│  🦦 Otter                                                     │\n"
+    << "│            ... transforms CT data into continuum properties   │\n"
+    << "└───────────────────────────────────────────────────────────────┘\n\n";
+}
+
+void
+print_section(const dealii::ConditionalOStream &pcout,
+              const std::string               &title)
+{
+  pcout << '\n' << title << '\n'
+        << "───────────────────────────────────────────────────────────────\n";
+}
+
+template <typename T>
+void
+print_entry(const dealii::ConditionalOStream &pcout,
+            const std::string               &name,
+            const T                         &value)
+{
+  pcout << " "
+        << std::left << std::setw(35) << name
+        << " : "
+        << value
+        << '\n';
+}
 
 template <int dim, typename Number>
 class SphericalParticalPacking : public dealii::Function<dim, Number>
@@ -86,6 +116,13 @@ read_spherical_packing_data(const std::string &filename)
     }
 
   return {points, values};
+}
+
+inline bool
+ends_with(const std::string &str, const std::string &suffix)
+{
+  return str.size() >= suffix.size() &&
+         str.compare(str.size() - suffix.size(), suffix.size(), suffix) == 0;
 }
 
 // Pretty printer with MPI aggregates for VmRSS

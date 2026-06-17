@@ -1,0 +1,14 @@
+{
+  "screening length": "0.25",
+  "mesh": "./mesh/mesh.vtk",
+  "n refinements": "2",
+  "enable gmg": "false",
+  "particle file": "./data_002.xyz",
+  "dim": "3",
+  "degree": "1",
+  "output name": "result_cp",
+  "output memory": true,
+  "use simplex mesh": "true",
+  "particle integration rhs": "quadrature_point",
+  "enable wall time": "true"
+}

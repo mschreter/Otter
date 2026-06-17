@@ -47,16 +47,18 @@
 
 #include <multigrid.h>
 #include <particle_util.h>
-#include <utils.h>
 #include <screened_poisson_operator.h>
 #include <sys/resource.h> // for rusage, getrusage, RUSAGE_SELF
 #include <sys/time.h>     // sometimes also needed on some systems
 #include <sys/types.h>
+#include <utils.h>
 
+#include <filesystem>
 #include <memory>
 #include <sstream>
 
 #include "include/particle_util.h"
+#include "include/utils.h"
 
 template <int dim>
 void
@@ -120,10 +122,12 @@ struct Parameters
   std::string output_name              = "output";
   bool        enable_wall_times        = false;
   bool        output_memory            = false;
+  unsigned int verbosity = 0;
 
   void
   add_parameters(dealii::ParameterHandler &prm)
   {
+    prm.add_parameter("verbosity", verbosity, "Verbosity. Choose 0 for tests and 1 for detailed output.");
     prm.add_parameter("dim", dim, "Set the dimension.");
     prm.add_parameter("n refinements", n_refinements, "Set the number of global refinements.");
     prm.add_parameter("screening length", screening_length, "Sets the screening length.");
@@ -197,7 +201,7 @@ struct Parameters
 
 template <int dim, typename Number, typename NumberMG>
 void
-run(const Parameters &params)
+run(const Parameters &params, const std::filesystem::path &input_file_path)
 {
   using VectorType       = LinearAlgebra::distributed::Vector<Number>;
   using VectorTypeMG     = LinearAlgebra::distributed::Vector<NumberMG>;
@@ -215,6 +219,17 @@ run(const Parameters &params)
 
   ConditionalOStream pcout(std::cout, Utilities::MPI::this_mpi_process(comm) == 0);
 
+  print_banner(pcout);
+
+print_section(pcout, "Problem setup");
+
+print_entry(pcout, "Dimension", dim);
+print_entry(pcout, "Degree", params.fe_degree);
+
+if (params.verbosity > 0)
+print_entry(pcout, "MPI ranks",
+            dealii::Utilities::MPI::n_mpi_processes(comm));
+
   TimerOutput timer(MPI_COMM_WORLD,
                     pcout,
                     params.enable_wall_times ? TimerOutput::summary : TimerOutput::never,
@@ -226,19 +241,20 @@ run(const Parameters &params)
 
   if (params.rhs_function != "")
     {
-      // If a csv file is provided as a rhs_function, assume that the rhs represents
-      // a spherical particle packing
-      if( ends_with(params.rhs_function, ".csv"))
-      {
-        const auto sphere_data = read_spherical_packing_data<dim>(params.rhs_function);
-        rhs_func     = std::make_shared<SphericalParticalPacking<dim,Number>>(sphere_data.first, sphere_data.second);
-      }
+      // If a csv file is provided as a rhs_function, assume that the rhs
+      // represents a spherical particle packing
+      if (ends_with(params.rhs_function, ".csv"))
+        {
+          const auto sphere_data = read_spherical_packing_data<dim>(params.rhs_function);
+          rhs_func = std::make_shared<SphericalParticalPacking<dim, Number>>(sphere_data.first,
+                                                                             sphere_data.second);
+        }
       // Alternatively, an analytical function is given through the input file
-      else 
-      {
+      else
+        {
           using Parser = dealii::FunctionParser<dim>; // IMPORTANT: match Number=double
           rhs_func     = std::make_shared<Parser>(params.rhs_function);
-      }
+        }
     }
 
   std::shared_ptr<Triangulation<dim>> triangulation;
@@ -274,38 +290,12 @@ run(const Parameters &params)
                                                       params.mesh_type,
                                                       params.mesh_arguments);
     }
-  else if (ends_with(params.mesh_type, ".ucd"))
-    {
-      pcout << "Read ucd mesh: " << params.mesh_type << std::endl;
-      GridIn<dim>   grid_in(*triangulation);
-      std::ifstream file(params.mesh_type);
-      grid_in.read_ucd(file);
-    }
-  else if (ends_with(params.mesh_type, ".inp"))
-    {
-      AssertThrow(not params.use_simplex_mesh, ExcNotImplemented());
-      pcout << "Read abaqus mesh: " << params.mesh_type << std::endl;
-      GridIn<dim>   grid_in(*triangulation);
-      std::ifstream file(params.mesh_type);
-      grid_in.read_abaqus(file);
-    }
-  else if (ends_with(params.mesh_type, ".vtk"))
-    {
-      pcout << "Read vtk mesh: " << params.mesh_type << std::endl;
-      GridIn<dim>   grid_in(*triangulation);
-      std::ifstream file(params.mesh_type);
-      grid_in.read_vtk(file);
-    }
-  else if (ends_with(params.mesh_type, ".msh"))
-    {
-      pcout << "Read msh mesh: " << params.mesh_type << std::endl;
-      GridIn<dim>   grid_in(*triangulation);
-      std::ifstream file(params.mesh_type);
-      grid_in.read_msh(file);
-    }
   else
     {
-      AssertThrow(false, ExcMessage("Requested mesh not found."));
+      const auto mesh_file = input_file_path.parent_path() / params.mesh_type;
+
+      GridIn<dim> grid_in(*triangulation);
+      grid_in.read(mesh_file);
     }
 
   triangulation->refine_global(params.n_refinements);
@@ -313,35 +303,29 @@ run(const Parameters &params)
   set_all_boundary_ids(*triangulation, 0);
   timer.leave_subsection();
 
-  pcout << "Setup active operator" << std::endl;
-
-  timer.enter_subsection("Setup dof system");
+  timer.enter_subsection("Setup DoF system");
 
   std::shared_ptr<Mapping<dim>>    mapping;
   std::shared_ptr<Quadrature<dim>> quadrature;
   DoFHandler<dim>                  dof_handler(*triangulation);
 
-  if (params.output_memory)
-    {
-      const double mem_tria =
-        dealii::Utilities::MPI::sum(triangulation->memory_consumption() / (1024.0 * 1024 * 1024),
-                                    MPI_COMM_WORLD);
-      pcout << "MEMORY Triangulation " << mem_tria << " GB" << std::endl;
-    }
-
   if (params.use_simplex_mesh)
     {
-      mapping    = std::make_shared<dealii::MappingFE<dim>>(dealii::FE_SimplexP<dim>(params.fe_degree));
+      mapping =
+        std::make_shared<dealii::MappingFE<dim>>(dealii::FE_SimplexP<dim>(params.fe_degree));
       quadrature = std::make_shared<dealii::QGaussSimplex<dim>>(params.fe_degree + 1);
       dof_handler.distribute_dofs(dealii::FE_SimplexP<dim>(params.fe_degree));
     }
   else
     {
-      quadrature = std::make_shared<dealii::QGauss<dim>>(params.fe_degree + 1);
+      quadrature    = std::make_shared<dealii::QGauss<dim>>(params.fe_degree + 1);
       const auto fe = dealii::FE_Q<dim>(params.fe_degree);
       dof_handler.distribute_dofs(fe);
-      mapping    = std::make_shared<dealii::MappingQ<dim>>(params.fe_degree);
+      mapping = std::make_shared<dealii::MappingQ<dim>>(params.fe_degree);
     }
+  
+  print_entry(pcout, "Number of Finite Elements", triangulation->n_cells());
+  print_entry(pcout, "Number of DoFs", dof_handler.n_dofs());
 
   if (params.enable_gmg)
     dof_handler.distribute_mg_dofs();
@@ -351,8 +335,11 @@ run(const Parameters &params)
       const double mem_dof =
         dealii::Utilities::MPI::sum(dof_handler.memory_consumption() / (1024.0 * 1024.0 * 1024),
                                     MPI_COMM_WORLD);
-
-      pcout << "MEMORY DoFHandler " << mem_dof << " GB" << std::endl;
+      const double mem_tria =
+        dealii::Utilities::MPI::sum(triangulation->memory_consumption() / (1024.0 * 1024 * 1024),
+                                    MPI_COMM_WORLD);
+      print_entry(pcout, "MEMORY Triangulation (GB)", mem_tria);
+      print_entry(pcout, "MEMORY DoFHandler (GB)", mem_dof);
     }
 
   AffineConstraints<Number> active_constraints;
@@ -360,7 +347,6 @@ run(const Parameters &params)
                             DoFTools::extract_locally_relevant_dofs(dof_handler));
   if (not params.neumann_bc)
     {
-      pcout << "set dirichlet boundary conditions" << std::endl;
       active_constraints.reinit(dof_handler.locally_owned_dofs(),
                                 DoFTools::extract_locally_relevant_dofs(dof_handler));
       VectorTools::interpolate_boundary_values(
@@ -375,10 +361,14 @@ run(const Parameters &params)
   active_operator.initialize_dof_vector(solution);
   active_operator.initialize_dof_vector(src);
 
+
+
   timer.leave_subsection();
 
   Utilities::System::MemoryStats mem_before, mem_after, mem_after_solve;
   dealii::Utilities::System::get_memory_stats(mem_before);
+
+  print_section(pcout, "Assembly of the right-hand side");
 
   if (rhs_func)
     {
@@ -392,6 +382,8 @@ run(const Parameters &params)
 
       if constexpr (dim > 1)
         {
+          const auto particle_file = input_file_path.parent_path() / params.particle_file;
+
           if (params.rhs_from_particle_formulation == "particle")
             {
               const auto output_file_name = params.output_name + "_particles.vtu";
@@ -399,7 +391,7 @@ run(const Parameters &params)
                 src,
                 *mapping,
                 *triangulation,
-                params.particle_file,
+                particle_file.string(),
                 active_operator.get_matrix_free(),
                 output_file_name,
                 params.output_particles,
@@ -411,7 +403,7 @@ run(const Parameters &params)
               create_rhs_from_solid_particles_closest_point<dim, Number, float, VectorType>(
                 src,
                 *mapping,
-                params.particle_file,
+                particle_file.string(),
                 active_operator.get_matrix_free(),
                 output_file_name,
                 params.output_particles,
@@ -423,7 +415,7 @@ run(const Parameters &params)
               create_rhs_from_solid_particles_closest_point_fast<dim, Number, VectorType>(
                 src,
                 *mapping,
-                params.particle_file,
+                particle_file.string(),
                 active_operator.get_matrix_free(),
                 output_file_name,
                 params.particle_file_is_regular_grid,
@@ -435,7 +427,8 @@ run(const Parameters &params)
               AssertThrow(false, ExcNotImplemented());
             }
         }
-      pcout << "|RHS|_l2 = " << src.l2_norm() << std::endl;
+
+      print_entry(pcout, "||RHS||l2", src.l2_norm());
       timer.leave_subsection();
     }
 
@@ -446,14 +439,12 @@ run(const Parameters &params)
     }
 
   // Finally, solve.
-  pcout << "Start linear solution procedure for number of DoFs: " << dof_handler.n_dofs()
-        << std::endl;
   ReductionControl solver_control(params.maxiter, params.abstol, params.reltol, false, false);
 
   if (params.enable_gmg)
     {
       timer.enter_subsection("Setup GMG");
-      pcout << "setup multigrid" << std::endl;
+      print_entry(pcout, "Preconditioner", "GMG");
       MGLevelObject<AffineConstraints<NumberMG>> mg_constraints(min_level, max_level);
       MGLevelObject<LevelMatrixType> mg_operators(min_level, max_level, params.screening_length);
 
@@ -573,25 +564,33 @@ run(const Parameters &params)
       timer.leave_subsection();
 
       timer.enter_subsection("Linear Solver");
-      SolverGMRES<VectorType>(solver_control).solve(active_operator, solution, src, preconditioner);
+      SolverCG<VectorType>(solver_control).solve(active_operator, solution, src, preconditioner);
       timer.leave_subsection();
     }
   else
     {
       timer.enter_subsection("Preconditioner");
-      TrilinosWrappers::PreconditionAMG preconditioner;
+      print_entry(pcout, "Preconditioner", "AMG");
 
-      // GMRES with AMG as preconditioner
+      TrilinosWrappers::PreconditionAMG preconditioner;
       preconditioner.initialize(active_operator.get_system_matrix());
+
+      // DiagonalMatrix<VectorType> preconditioner;
+      // preconditioner.get_vector() = active_operator.get_diagonal();
+
       timer.leave_subsection();
 
       timer.enter_subsection("Linear Solver");
-      SolverGMRES<VectorType>(solver_control).solve(active_operator, solution, src, preconditioner);
+
+      print_section(pcout, "Linear Solver");
+      SolverCG<VectorType>(solver_control).solve(active_operator, solution, src, preconditioner);
+
       timer.leave_subsection();
+      print_entry(pcout, "Iterations:", solver_control.last_step());
     }
   active_constraints.distribute(solution);
 
-  pcout << "|Solution|_l2 = " << solution.l2_norm() << std::endl;
+      print_entry(pcout, "||u||l2", solution.l2_norm());
 
   if (params.output_memory)
     {
@@ -610,7 +609,8 @@ run(const Parameters &params)
         quadrature_L2 = std::make_shared<dealii::QGauss<dim>>(params.fe_degree + 2);
 
       Vector<Number> cell_wise_error(triangulation->n_active_cells());
-      const auto     zero_func = std::make_shared<Functions::ZeroFunction<dim, Number>>(1 /*n components*/);
+      const auto     zero_func =
+        std::make_shared<Functions::ZeroFunction<dim, Number>>(1 /*n components*/);
 
       solution.update_ghost_values();
       VectorTools::integrate_difference(*mapping,
@@ -623,7 +623,14 @@ run(const Parameters &params)
       const auto error = VectorTools::compute_global_error(*triangulation,
                                                            cell_wise_error,
                                                            VectorTools::NormType::L2_norm);
-      pcout << "|solution|_L2 " << std::setw(15) << std::setprecision(15) << std::scientific << error << std::endl;
+      //pcout << "|solution|_L2 " << std::setw(15) << std::setprecision(15) << std::scientific
+            //<< error << std::endl;
+    
+      print_section(pcout, "Post-Processing");
+
+      print_entry(pcout, "||u||L2", error); 
+
+
     }
 
   if (params.output_paraview)
@@ -679,9 +686,14 @@ main(int argc, char **argv)
   dealii::Utilities::System::get_memory_stats(mem_before);
 
   Parameters params;
+  namespace fs = std::filesystem;
+
+  fs::path input_file_path;
 
   if (argc > 1)
     {
+      input_file_path = fs::path(argv[1]);
+
       int argp = 1;
 
       while (argp < argc)
@@ -695,7 +707,7 @@ main(int argc, char **argv)
               std::ifstream file;
               file.open(argv[argp]);
               prm.parse_input_from_json(file, true);
-              if (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
+              if (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0 and params.verbosity > 0)
                 prm.print_parameters(std::cout, ParameterHandler::OutputStyle::ShortJSON);
               argp += 1;
             }
@@ -703,17 +715,17 @@ main(int argc, char **argv)
             {
               AssertThrow(false,
                           ExcMessage("Your run command is wrong. Consider "
-                                     "./screened-poisson-fe my_input.json"));
+                                     "./otter my_input.json"));
             }
         }
     }
 
   if (params.dim == 1)
-    run<1, double, float>(params);
+    run<1, double, float>(params, input_file_path);
   else if (params.dim == 2)
-    run<2, double, float>(params);
+    run<2, double, float>(params, input_file_path);
   else if (params.dim == 3)
-    run<3, double, float>(params);
+    run<3, double, float>(params, input_file_path);
   else
     {
       AssertThrow(false, ExcMessage("Your run command is wrong."));

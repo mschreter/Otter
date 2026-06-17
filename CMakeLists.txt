@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
-project(ScreenedPoissonEfficient)
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+project(OTTER)
 
 # -----------------------------------------------------------------------------
 # Find deal.II
@@ -52,21 +53,21 @@ DEAL_II_SETUP_TARGET(${PROJECT_NAME}-lib)
 # -----------------------------------------------------------------------------
 include_directories(include)
 
-add_executable(screened-poisson-fe screened_poisson_gmg.cc)
+add_executable(otter screened_poisson_gmg.cc)
 
 # Link against our project library and TIFF as well
-target_link_libraries(screened-poisson-fe
+target_link_libraries(otter
     ${PROJECT_NAME}-lib
     TIFF::TIFF)
 
-DEAL_II_SETUP_TARGET(screened-poisson-fe)
+DEAL_II_SETUP_TARGET(otter)
 
 # -----------------------------------------------------------------------------
 # Tests
 # -----------------------------------------------------------------------------
 enable_testing()
 
-set(TEST_TARGET "screened-poisson-fe")
+set(TEST_TARGET "otter")
 DEAL_II_PICKUP_TESTS("${TEST_TARGET}")
 
 add_subdirectory(tests)

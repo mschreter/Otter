@@ -1,0 +1,62 @@
+reset
+reset aprepro
+
+import asset "spot.stl"
+create volume surface all heal 
+
+create group "specimen"
+group specimen add volume {Id("volume")}
+
+#auto_clean volume in specimen small_surfaces small_curve_size 100
+
+volume in specimen scheme tetmesh geometry approximation angle 15
+#volume in specimen scheme tetprimitive 
+
+
+# for hex
+# 160 (coarse)
+# 80 (fine)
+
+# for tet
+# 200 (coarse)
+# 100 (coarse)
+# 50 (fine)
+
+volume in specimen size 0.05
+
+
+set trimesher geometry sizing off
+
+#set developer commands on
+#set trimesher remove tiny edge length 0.02
+#set developer commands off
+
+mesh volume in specimen
+
+create block {NumBlocks()+1}
+block {NumBlocks()} name "specimen" 
+block {NumBlocks()} add volume in specimen
+block {NumBlocks()} element type tetra4
+#{specimen_bId = NumBlocks()}
+
+color volume all sandybrown
+
+#thex volume in specimen
+
+
+
+quality volume in specimen scaled jacobian global histogram draw mesh
+
+export abaqus "mesh.inp" block {specimen_bId} overwrite partial
+#export ucd "/mnt/Samsung970EVOPlus/wdirPaul/2025_02_07_alphaShapes/surfaceReconstruction/mesh.ucd"  dimension 3  overwrite 
+#export mesh "/mnt/Samsung970EVOPlus/wdirPaul/2025_02_07_alphaShapes/surfaceReconstruction/mesh.e" overwrite
+
+
+
+
+
+
+
+
+
+
