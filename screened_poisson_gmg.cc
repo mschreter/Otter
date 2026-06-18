@@ -116,18 +116,20 @@ struct Parameters
   unsigned int coarse_solver_n_cycles        = 1;
   std::string  coarse_solver_smoother_type   = "ILU";
 
-  bool        compute_L2_norm_solution = true;
-  bool        output_paraview          = true;
-  bool        output_particles         = true;
-  std::string output_name              = "output";
-  bool        enable_wall_times        = false;
-  bool        output_memory            = false;
-  unsigned int verbosity = 0;
+  bool         compute_L2_norm_solution = true;
+  bool         output_paraview          = true;
+  bool         output_particles         = true;
+  std::string  output_name              = "output";
+  bool         enable_wall_times        = false;
+  bool         output_memory            = false;
+  unsigned int verbosity                = 0;
 
   void
   add_parameters(dealii::ParameterHandler &prm)
   {
-    prm.add_parameter("verbosity", verbosity, "Verbosity. Choose 0 for tests and 1 for detailed output.");
+    prm.add_parameter("verbosity",
+                      verbosity,
+                      "Verbosity. Choose 0 for tests and 1 for detailed output.");
     prm.add_parameter("dim", dim, "Set the dimension.");
     prm.add_parameter("n refinements", n_refinements, "Set the number of global refinements.");
     prm.add_parameter("screening length", screening_length, "Sets the screening length.");
@@ -221,14 +223,13 @@ run(const Parameters &params, const std::filesystem::path &input_file_path)
 
   print_banner(pcout);
 
-print_section(pcout, "Problem setup");
+  print_section(pcout, "Problem setup");
 
-print_entry(pcout, "Dimension", dim);
-print_entry(pcout, "Degree", params.fe_degree);
+  print_entry(pcout, "Dimension", dim);
+  print_entry(pcout, "Degree", params.fe_degree);
 
-if (params.verbosity > 0)
-print_entry(pcout, "MPI ranks",
-            dealii::Utilities::MPI::n_mpi_processes(comm));
+  if (params.verbosity > 0)
+    print_entry(pcout, "MPI ranks", dealii::Utilities::MPI::n_mpi_processes(comm));
 
   TimerOutput timer(MPI_COMM_WORLD,
                     pcout,
@@ -323,7 +324,7 @@ print_entry(pcout, "MPI ranks",
       dof_handler.distribute_dofs(fe);
       mapping = std::make_shared<dealii::MappingQ<dim>>(params.fe_degree);
     }
-  
+
   print_entry(pcout, "Number of Finite Elements", triangulation->n_cells());
   print_entry(pcout, "Number of DoFs", dof_handler.n_dofs());
 
@@ -590,7 +591,7 @@ print_entry(pcout, "MPI ranks",
     }
   active_constraints.distribute(solution);
 
-      print_entry(pcout, "||u||l2", solution.l2_norm());
+  print_entry(pcout, "||u||l2", solution.l2_norm());
 
   if (params.output_memory)
     {
@@ -623,14 +624,12 @@ print_entry(pcout, "MPI ranks",
       const auto error = VectorTools::compute_global_error(*triangulation,
                                                            cell_wise_error,
                                                            VectorTools::NormType::L2_norm);
-      //pcout << "|solution|_L2 " << std::setw(15) << std::setprecision(15) << std::scientific
-            //<< error << std::endl;
-    
+      // pcout << "|solution|_L2 " << std::setw(15) << std::setprecision(15) << std::scientific
+      //<< error << std::endl;
+
       print_section(pcout, "Post-Processing");
 
-      print_entry(pcout, "||u||L2", error); 
-
-
+      print_entry(pcout, "||u||L2", error);
     }
 
   if (params.output_paraview)

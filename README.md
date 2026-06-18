@@ -7,7 +7,7 @@
 
 [![Docker Image](https://img.shields.io/badge/docker-ghcr.io-blue?logo=docker)](https://ghcr.io/mschreter/otter)
 
-# From CT data to homogenized properties 
+# From CT data to homogenized properties
 
 
 
@@ -69,7 +69,7 @@ Uncomment this line in `candi.cfg` to enable ArborX support ...
 ```bash
 #PACKAGES="${PACKAGES} once:arborx"
 ```
-... and install: 
+... and install:
 ```bash
 ./candi.sh
 ```

@@ -20,4 +20,3 @@ License
 --------------------------------------------
 
 As the sole author of this data, I hereby release it into the public domain.
-

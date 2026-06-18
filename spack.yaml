@@ -15,4 +15,3 @@ spack:
   packages:
     gcc:
       buildable: False
-

@@ -71,4 +71,3 @@ set(TEST_TARGET "otter")
 DEAL_II_PICKUP_TESTS("${TEST_TARGET}")
 
 add_subdirectory(tests)
-

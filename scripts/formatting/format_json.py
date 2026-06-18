@@ -24,6 +24,7 @@ def main():
     with open(args.file_out, 'w') as f:
         json.dump(datastore, f, indent=2, separators=(
             ',', ': '), sort_keys=args.sort)
+        f.write("\n")
 
 
 if __name__ == "__main__":
