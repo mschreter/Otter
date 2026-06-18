@@ -1,4 +1,15 @@
-# Screened Poisson Solver (Efficient FEM)
+<p align="center">
+  <img src="doc/logo/otter_icon.png" alt="OTTER logo" width="200">
+</p>
+
+<br clear="left"/>
+<br clear="left"/>
+
+[![Docker Image](https://img.shields.io/badge/docker-ghcr.io-blue?logo=docker)](https://ghcr.io/mschreter/otter)
+
+# From CT data to homogenized properties 
+
+
 
 This repository contains an efficient finite element implementation for solving the screened Poisson equation using the deal.II library.
 
@@ -11,6 +22,13 @@ First, install [deal.II](https://www.dealii.org/) using the [candi](https://gith
 ```bash
 git clone https://github.com/dealii/candi.git
 cd candi
+```
+Uncomment this line in `candi.cfg` to enable ArborX support ...
+```bash
+#PACKAGES="${PACKAGES} once:arborx"
+```
+... and install: 
+```bash
 ./candi.sh
 ```
 Once installed, export the deal.II environment for your current shell session:
@@ -22,8 +40,8 @@ Replace `/path/to/dealii-candi` with the actual path on your machine.
 ### 2. Install this project
 Clone the repository and build the solver:
 ```bash
-git clone https://github.com/mschreter/screened-poisson-efficient
-cd screened-poisson-efficient/fem
+git clone https://github.com/mschreter/otter
+cd otter
 cmake --preset=release
 cd build-release
 make -j<n_processes>
@@ -32,62 +50,9 @@ Replace `<n_processes>` with the number of CPU threads you want to use for compi
 
 ## Running a simulation
 
-We run e.g. the example placed in the tests folder:
+We run e.g. the example `spot-the-cow` by executing
 
 ```bash
-cd screened-poisson-efficient/tests
-mpirun -np <n_processes> ../build-release/screened-poisson-efficient input_abaqus.json
-```
-
-## Installation with ArborX
-
-Make sure the replaces `n_processes` with a corresponding value
-
-```bash
-# install spack
-git clone https://github.com/spack/spack ~/.spack/Spack
-. ~/.spack/Spack/share/spack/setup-env.sh
-echo '. ~/.spack/Spack/share/spack/setup-env.sh' >> ~/.bash_profile
-
-# download the repository
-git clone https://github.com/mschreter/screened-poisson-efficient
-cd screened-poisson-efficient/fem
-
-# install dependencies via spack
-spack env create -d spe spack.yaml
-spack env activate spe
-spack concretize
-spack install
-
-# install deal.II into screened-poisson-efficient/fem/build-dealii
-git clone https://github.com/dealii/dealii.git
-mkdir -p build-dealii
-cd build-dealii
-cmake \
-    -D CMAKE_CXX_COMPILER="mpicxx" \
-    -D CMAKE_CXX_FLAGS="-march=native -Wno-array-bounds" \
-    -D CMAKE_BUILD_TYPE="Release" \
-    -D DEAL_II_CXX_FLAGS_RELEASE="-O3" \
-    -D CMAKE_CXX_STANDARD="20" \
-    -D CMAKE_C_COMPILER="mpicc" \
-    -D MPIEXEC_PREFLAGS="-bind-to none" \
-    -D DEAL_II_WITH_P4EST="ON" \
-    -D DEAL_II_WITH_PETSC="OFF" \
-    -D DEAL_II_WITH_METIS="ON" \
-    -D DEAL_II_WITH_MPI="ON" \
-    -D DEAL_II_WITH_TRILINOS="ON" \
-    -D DEAL_II_WITH_ZLIB="ON" \
-    -D DEAL_II_FORCE_BUNDLED_BOOST="ON" \
-    -D DEAL_II_WITH_KOKKOS="ON" \
-    -D DEAL_II_WITH_ARBORX="ON" \
-    -D DEAL_II_WITH_HDF5="OFF" \
-    -D DEAL_II_WITH_64BIT_INDICES="OFF" \
-    -D DEAL_II_COMPONENT_EXAMPLES="OFF" \
-    ../dealii
-make -j<n_processes>
-cd ..
-mkdir -p build
-cd build
-cmake -DDEAL_II_DIR=build-dealii -DCMAKE_CXX_COMPILER=mpicxx -DCMAKE_BUILD_TYPE=Release ..
-make -j<n_processes>
+cd otter/examples/spot-the-cow
+mpirun -np <n_processes> ../build-release/otter input_cp.json
 ```
