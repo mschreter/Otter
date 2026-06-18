@@ -13,7 +13,49 @@
 
 This repository contains an efficient finite element implementation for solving the screened Poisson equation using the deal.II library.
 
-## Installation (without ArborX)
+## Running with Docker (recommended for users)
+
+A prebuilt Docker image is available via GitHub Container Registry:
+
+```bash
+docker pull ghcr.io/mschreter/otter:latest
+```
+
+To run a simulation, mount your working directory into the container and execute OTTER:
+
+```bash
+docker run --rm \
+  -v $(pwd):/workspace \
+  -w /workspace \
+  ghcr.io/mschreter/otter:latest \
+  otter input.json
+```
+
+For MPI runs, use:
+
+```bash
+docker run --rm \
+  -v $(pwd):/workspace \
+  -w /workspace \
+  ghcr.io/mschreter/otter:latest \
+  mpirun -np 4 otter input.json
+```
+
+### Example
+
+```bash
+cd examples/spot-the-cow
+
+docker run --rm \
+  -v $(pwd):/workspace \
+  -w /workspace \
+  ghcr.io/mschreter/otter:latest \
+  mpirun -np 4 otter input_cp.json
+```
+
+All output files are written directly to the mounted working directory on the host system.
+
+## Installation (for developers)
 
 ### 1. Install deal.II via Candi
 
