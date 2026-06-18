@@ -6,6 +6,7 @@
 <br clear="left"/>
 
 [![Docker Image](https://img.shields.io/badge/docker-ghcr.io-blue?logo=docker)](https://ghcr.io/mschreter/otter)
+[![Pre-commit](https://github.com/mschreter/otter/actions/workflows/pre-commit.yml/badge.svg)](https://github.com/mschreter/otter/actions/workflows/pre-commit.yml)
 
 # From CT data to homogenized properties
 
