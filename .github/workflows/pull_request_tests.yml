@@ -1,4 +1,3 @@
-```yaml
 name: Pull request run of GitHub CI
 
 on:
@@ -71,4 +70,3 @@ jobs:
       - name: Prune Docker system
         run: |
           docker system prune -af
-```
