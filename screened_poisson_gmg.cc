@@ -293,10 +293,17 @@ run(const Parameters &params, const std::filesystem::path &input_file_path)
     }
   else
     {
-      const auto mesh_file = input_file_path.parent_path() / params.mesh_type;
+      const auto    mesh_file = input_file_path.parent_path() / params.mesh_type;
+      std::ifstream in(mesh_file);
+      AssertThrow(in, ExcMessage("Could not open mesh file: " + mesh_file.string()));
+
 
       GridIn<dim> grid_in(*triangulation);
-      grid_in.read(mesh_file);
+
+      if (mesh_file.extension() == ".inp")
+        grid_in.read_abaqus(in);
+      else
+        grid_in.read(in);
     }
 
   triangulation->refine_global(params.n_refinements);
