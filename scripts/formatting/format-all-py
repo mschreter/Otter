@@ -1,0 +1,6 @@
+#!/bin/sh
+
+# format python files
+for i in $(find applications/ doc/ scripts/ -type f \( -name "*.py" \) ); do
+  autopep8 --aggressive --exit-code --ignore E501 -i $i &
+done
