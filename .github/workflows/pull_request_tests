@@ -1,0 +1,74 @@
+```yaml
+name: Pull request run of GitHub CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches: [ main ]
+    types: [ opened, synchronize, reopened, labeled ]
+  schedule:
+    - cron: '0 0 * * *'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref || github.run_id }}
+  cancel-in-progress: true
+
+env:
+  COMPILE_JOBS: 4
+  PROJECT_NAME: otter
+  CTEST_COMMAND: ctest
+
+jobs:
+  build:
+    name: Build ${{ matrix.build_type }}-dealii:${{ matrix.dealii_version }}
+    runs-on: self-hosted
+
+    strategy:
+      fail-fast: false
+      matrix:
+        build_type: [ "Release" ]
+        dealii_version: [ "master" ]
+
+    container:
+      image: dealii/dealii:${{ matrix.dealii_version }}-noble
+      options: --user root
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compile Otter
+        run: |
+          cmake --preset=release \
+            -D CMAKE_CXX_FLAGS="-Werror"
+
+          cmake --build build-release \
+            -j${{ env.COMPILE_JOBS }}
+
+      - name: Test
+        run: |
+          export HWLOC_HIDE_ERRORS=2
+          export OMPI_ALLOW_RUN_AS_ROOT=1
+          export OMPI_ALLOW_RUN_AS_ROOT_CONFIRM=1
+
+          cd build-release
+          ${{ env.CTEST_COMMAND }} -j${{ env.COMPILE_JOBS }} --output-on-failure
+
+      - name: Failed test log
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-log
+          path: |
+            build-release/**/tests/**/*{stdout,output}*
+            build-release/**/Testing/Temporary/*.log
+
+  clean:
+    if: ${{ always() }}
+    runs-on: self-hosted
+    steps:
+      - name: Prune Docker system
+        run: |
+          docker system prune -af
+```
