@@ -303,7 +303,7 @@ run(const Parameters &params, const std::filesystem::path &input_file_path)
       if (mesh_file.extension() == ".inp")
         grid_in.read_abaqus(in);
       else
-        grid_in.read(in);
+        grid_in.read(mesh_file);
     }
 
   triangulation->refine_global(params.n_refinements);

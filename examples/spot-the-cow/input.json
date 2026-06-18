@@ -3,7 +3,7 @@
   "mesh": "./mesh/mesh.vtk",
   "n refinements": "0",
   "enable gmg": "false",
-  "particle file": "./data.csv",
+  "particle file": "./data_002.csv",
   "dim": "3",
   "degree": "1",
   "output name": "result",
