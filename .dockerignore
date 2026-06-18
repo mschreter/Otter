@@ -7,7 +7,6 @@ cmake_install.cmake
 Makefile
 .git
 .github
-tests/
 doc/
 *.vtk
 *.vtu
