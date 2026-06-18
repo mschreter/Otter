@@ -99,12 +99,13 @@ read_tiff_data_only(const std::string &filename)
 
   if constexpr (dim == 2)
     {
-      return {data, {static_cast<int>(width), static_cast<int>(height)}};
+      return {data, std::array<int, dim>{{static_cast<int>(width), static_cast<int>(height)}}};
     }
   else
     {
       return {data,
-              {static_cast<int>(width), static_cast<int>(height), static_cast<int>(n_slices)}};
+              std::array<int, dim>{
+                {static_cast<int>(width), static_cast<int>(height), static_cast<int>(n_slices)}}};
     }
 }
 

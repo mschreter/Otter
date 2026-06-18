@@ -92,9 +92,9 @@ struct Parameters
   std::string  particle_file                 = "";
   bool         particle_file_is_regular_grid = false;
   std::string  rhs_function                  = "";
-  bool         enable_gmg                    = true;
+  bool         enable_gmg                    = false;
   bool         use_simplex_mesh              = false;
-  std::string  rhs_from_particle_formulation = "particle";
+  std::string  rhs_from_particle_formulation = "quadrature_point";
 
   // iterative solver (GMRES)
   unsigned int maxiter = 10000;
@@ -683,40 +683,70 @@ main(int argc, char **argv)
 
   Utilities::System::MemoryStats mem_before, mem_after;
   dealii::Utilities::System::get_memory_stats(mem_before);
-
   Parameters params;
+
+  auto print_help = [&]() {
+    std::cout << "OTTER\n"
+              << "-----\n\n"
+              << "Usage:\n\n"
+              << "  otter\n"
+              << "      Run with built-in default parameters.\n\n"
+              << "  otter input.json\n"
+              << "      Read parameters from a JSON file.\n\n"
+              << "Options:\n"
+              << "  -h, --help\n"
+              << "      Show this help message.\n\n";
+
+    ParameterHandler prm;
+    params.add_parameters(prm);
+
+    std::cout << "Default parameters:\n";
+    prm.print_parameters(std::cout, ParameterHandler::OutputStyle::ShortJSON);
+  };
+
   namespace fs = std::filesystem;
 
   fs::path input_file_path;
 
-  if (argc > 1)
+  if (argc == 1)
     {
+      // Run with built-in defaults.
+    }
+  else if (argc == 2)
+    {
+      const std::string arg(argv[1]);
+
+      if (arg == "-h" || arg == "--help")
+        {
+          if (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0)
+            print_help();
+
+          return 0;
+        }
+
       input_file_path = fs::path(argv[1]);
 
-      int argp = 1;
+      ParameterHandler prm;
+      params.add_parameters(prm);
 
-      while (argp < argc)
-        {
-          const std::string input(argv[argp]);
+      std::ifstream file(input_file_path);
 
-          if (argp == 1)
-            {
-              ParameterHandler prm;
-              params.add_parameters(prm);
-              std::ifstream file;
-              file.open(argv[argp]);
-              prm.parse_input_from_json(file, true);
-              if (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0 and params.verbosity > 0)
-                prm.print_parameters(std::cout, ParameterHandler::OutputStyle::ShortJSON);
-              argp += 1;
-            }
-          else
-            {
-              AssertThrow(false,
-                          ExcMessage("Your run command is wrong. Consider "
-                                     "./otter my_input.json"));
-            }
-        }
+      AssertThrow(file.good(),
+                  ExcMessage("Could not open parameter file <" + input_file_path.string() + ">."));
+
+      prm.parse_input_from_json(file, true);
+
+      if (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0 && params.verbosity > 0)
+        prm.print_parameters(std::cout, ParameterHandler::OutputStyle::ShortJSON);
+    }
+  else
+    {
+      AssertThrow(false,
+                  ExcMessage("Wrong run command.\n"
+                             "Use one of:\n"
+                             "  otter\n"
+                             "  otter input.json\n"
+                             "  otter --help"));
     }
 
   if (params.dim == 1)
