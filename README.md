@@ -28,7 +28,7 @@ docker run --rm \
   -v $(pwd):/workspace \
   -w /workspace \
   ghcr.io/mschreter/otter:latest \
-  otter input.json
+  otter <my_input_file>
 ```
 
 For MPI runs, use:
@@ -38,7 +38,7 @@ docker run --rm \
   -v $(pwd):/workspace \
   -w /workspace \
   ghcr.io/mschreter/otter:latest \
-  mpirun -np 4 otter input.json
+  mpirun -np <n_ranks> otter <my_input_file>
 ```
 
 ### Example
