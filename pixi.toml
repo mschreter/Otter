@@ -1,0 +1,11 @@
+[workspace]
+name = "formatting-tools"
+version = "0.1.0"
+channels = ["conda-forge"]
+platforms = ["linux-64"]
+
+[dependencies]
+python = ">=3.10"
+autopep8 = "*"
+pre-commit = "*"
+clang-format = "=16"
