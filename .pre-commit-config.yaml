@@ -1,0 +1,35 @@
+# See https://pre-commit.com for more information
+# See https://pre-commit.com/hooks.html for more hooks
+repos:
+-   repo: local
+    hooks:
+    -   id: check-clang-format-version
+        name: Check clang-format version
+        entry: >
+          bash -c '
+          VERSION=$(clang-format --version 2>/dev/null || true);
+          echo "$VERSION";
+          echo "$VERSION" | grep -q "version 16" ||
+          {
+            echo "ERROR: clang-format version 16 is required.";
+            exit 1;
+          }'
+        language: system
+        pass_filenames: false
+-   repo: local
+    hooks:
+    -   id: format-all
+        name: Check Code Formatting
+        entry: scripts/formatting/format-all
+        language: system
+        types: []
+        pass_filenames: false
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+    -   id: trailing-whitespace
+        files: \.(cpp|cc|c|hpp|h|txt|yaml|yml|json|prm|py|sh|md)$
+    -   id: end-of-file-fixer
+        files: \.(cpp|cc|c|hpp|h|txt|yaml|yml|json|prm|py|sh|md)$
+    -   id: check-yaml
+    -   id: check-added-large-files

@@ -1,0 +1,27 @@
+name: Indent
+
+on:
+  pull_request:
+    branches: [ master ]
+
+  push:
+    branches: [ master ]
+
+  schedule:
+    - cron: '0 0 * * *'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Set up pixi
+      uses: prefix-dev/setup-pixi@v0.8.8
+      with:
+        pixi-version: latest
+        cache: false
+
+    - name: Run pre-commit hooks
+      run: pixi run pre-commit run --all-files --show-diff-on-failure
