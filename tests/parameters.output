@@ -1,0 +1,335 @@
+{
+    "finite element":
+    {
+        "degree":
+        {
+            "value": "1",
+            "default_value": "1",
+            "documentation": "Polynomial degree of the finite element space.",
+            "pattern": "7",
+            "pattern_description": "[Integer]",
+            "actions": "7"
+        }
+    },
+    "geometric multigrid":
+    {
+        "enable":
+        {
+            "value": "false",
+            "default_value": "false",
+            "documentation": "Enable geometric multigrid. If false, AMG is used instead.",
+            "pattern": "15",
+            "pattern_description": "[Bool]",
+            "actions": "15"
+        },
+        "coarse solver":
+        {
+            "absolute tolerance":
+            {
+                "value": "1e-20",
+                "default_value": "1e-20",
+                "documentation": "Absolute coarse-grid solver tolerance.",
+                "pattern": "22",
+                "pattern_description": "[Double -MAX_DOUBLE...MAX_DOUBLE (inclusive)]",
+                "actions": "22"
+            },
+            "max iterations":
+            {
+                "value": "10000",
+                "default_value": "10000",
+                "documentation": "Maximum number of coarse-grid solver iterations.",
+                "pattern": "21",
+                "pattern_description": "[Integer]",
+                "actions": "21"
+            },
+            "relative tolerance":
+            {
+                "value": "0.0001",
+                "default_value": "0.0001",
+                "documentation": "Relative coarse-grid solver tolerance.",
+                "pattern": "23",
+                "pattern_description": "[Double -MAX_DOUBLE...MAX_DOUBLE (inclusive)]",
+                "actions": "23"
+            },
+            "smoother sweeps":
+            {
+                "value": "1",
+                "default_value": "1",
+                "documentation": "Number of coarse-grid smoother sweeps.",
+                "pattern": "24",
+                "pattern_description": "[Integer]",
+                "actions": "24"
+            },
+            "smoother type":
+            {
+                "value": "ILU",
+                "default_value": "ILU",
+                "documentation": "Coarse-grid smoother type, e.g., ILU.",
+                "pattern": "26",
+                "pattern_description": "[Anything]",
+                "actions": "26"
+            },
+            "type":
+            {
+                "value": "direct",
+                "default_value": "direct",
+                "documentation": "Type of coarse-grid solver.",
+                "pattern": "20",
+                "pattern_description": "[Anything]",
+                "actions": "20"
+            },
+            "v-cycle steps":
+            {
+                "value": "1",
+                "default_value": "1",
+                "documentation": "Number of coarse-grid V-cycle steps.",
+                "pattern": "25",
+                "pattern_description": "[Integer]",
+                "actions": "25"
+            }
+        },
+        "smoother":
+        {
+            "degree":
+            {
+                "value": "5",
+                "default_value": "5",
+                "documentation": "Degree of the smoother polynomial.",
+                "pattern": "18",
+                "pattern_description": "[Integer]",
+                "actions": "18"
+            },
+            "eigenvalue cg iterations":
+            {
+                "value": "20",
+                "default_value": "20",
+                "documentation": "Number of CG iterations for estimating the largest eigenvalue.",
+                "pattern": "19",
+                "pattern_description": "[Integer]",
+                "actions": "19"
+            },
+            "smoothing range":
+            {
+                "value": "20",
+                "default_value": "20",
+                "documentation": "Smoothing range used by the smoother.",
+                "pattern": "17",
+                "pattern_description": "[Double -MAX_DOUBLE...MAX_DOUBLE (inclusive)]",
+                "actions": "17"
+            },
+            "type":
+            {
+                "value": "chebyshev",
+                "default_value": "chebyshev",
+                "documentation": "Type of multigrid smoother, e.g., chebyshev.",
+                "pattern": "16",
+                "pattern_description": "[Anything]",
+                "actions": "16"
+            }
+        }
+    },
+    "linear solver":
+    {
+        "absolute tolerance":
+        {
+            "value": "1e-20",
+            "default_value": "1e-20",
+            "documentation": "Absolute convergence tolerance.",
+            "pattern": "13",
+            "pattern_description": "[Double -MAX_DOUBLE...MAX_DOUBLE (inclusive)]",
+            "actions": "13"
+        },
+        "max iterations":
+        {
+            "value": "10000",
+            "default_value": "10000",
+            "documentation": "Maximum number of linear solver iterations.",
+            "pattern": "12",
+            "pattern_description": "[Integer]",
+            "actions": "12"
+        },
+        "relative tolerance":
+        {
+            "value": "1e-10",
+            "default_value": "1e-10",
+            "documentation": "Relative convergence tolerance.",
+            "pattern": "14",
+            "pattern_description": "[Double -MAX_DOUBLE...MAX_DOUBLE (inclusive)]",
+            "actions": "14"
+        }
+    },
+    "mesh":
+    {
+        "arguments":
+        {
+            "value": "",
+            "default_value": "",
+            "documentation": "Arguments passed to GridGenerator::generate_from_name_and_arguments().",
+            "pattern": "4",
+            "pattern_description": "[Anything]",
+            "actions": "4"
+        },
+        "global refinements":
+        {
+            "value": "5",
+            "default_value": "5",
+            "documentation": "Number of global mesh refinements.",
+            "pattern": "5",
+            "pattern_description": "[Integer]",
+            "actions": "5"
+        },
+        "type":
+        {
+            "value": "",
+            "default_value": "",
+            "documentation": "Mesh type or mesh file name. Examples: hyper_cube, hyper_rectangle, cylinder, or a mesh file.",
+            "pattern": "3",
+            "pattern_description": "[Anything]",
+            "actions": "3"
+        },
+        "use simplex mesh":
+        {
+            "value": "false",
+            "default_value": "false",
+            "documentation": "Use simplex elements instead of tensor-product elements.",
+            "pattern": "6",
+            "pattern_description": "[Bool]",
+            "actions": "6"
+        }
+    },
+    "output":
+    {
+        "compute solution l2 norm":
+        {
+            "value": "true",
+            "default_value": "true",
+            "documentation": "Compute the L2 norm of the solution.",
+            "pattern": "30",
+            "pattern_description": "[Bool]",
+            "actions": "30"
+        },
+        "name":
+        {
+            "value": "output",
+            "default_value": "output",
+            "documentation": "Base name of the output files.",
+            "pattern": "27",
+            "pattern_description": "[Anything]",
+            "actions": "27"
+        },
+        "print memory usage":
+        {
+            "value": "false",
+            "default_value": "false",
+            "documentation": "Print memory usage statistics.",
+            "pattern": "32",
+            "pattern_description": "[Bool]",
+            "actions": "32"
+        },
+        "print wall times":
+        {
+            "value": "false",
+            "default_value": "false",
+            "documentation": "Print wall-time statistics.",
+            "pattern": "31",
+            "pattern_description": "[Bool]",
+            "actions": "31"
+        },
+        "verbosity":
+        {
+            "value": "0",
+            "default_value": "0",
+            "documentation": "Verbosity level. Use 0 for tests and 1 for detailed output.",
+            "pattern": "33",
+            "pattern_description": "[Integer]",
+            "actions": "33"
+        },
+        "write paraview files":
+        {
+            "value": "true",
+            "default_value": "true",
+            "documentation": "Write solution output for ParaView.",
+            "pattern": "28",
+            "pattern_description": "[Bool]",
+            "actions": "28"
+        },
+        "write source data":
+        {
+            "value": "true",
+            "default_value": "true",
+            "documentation": "Write source-data output.",
+            "pattern": "29",
+            "pattern_description": "[Bool]",
+            "actions": "29"
+        }
+    },
+    "problem":
+    {
+        "dimension":
+        {
+            "value": "3",
+            "default_value": "3",
+            "documentation": "Spatial dimension.",
+            "pattern": "0",
+            "pattern_description": "[Integer range -2147483648...2147483647 (inclusive)]",
+            "actions": "0"
+        },
+        "screening length":
+        {
+            "value": "0",
+            "default_value": "0",
+            "documentation": "Screening length of the screened-Poisson equation.",
+            "pattern": "1",
+            "pattern_description": "[Double -MAX_DOUBLE...MAX_DOUBLE (inclusive)]",
+            "actions": "1"
+        },
+        "use neumann boundary conditions":
+        {
+            "value": "true",
+            "default_value": "true",
+            "documentation": "Use homogeneous Neumann boundary conditions. Alternatively, Dirichlet boundary conditions with a prescribed value of 1 are used.",
+            "pattern": "2",
+            "pattern_description": "[Bool]",
+            "actions": "2"
+        }
+    },
+    "source data":
+    {
+        "analytical function":
+        {
+            "value": "",
+            "default_value": "",
+            "documentation": "Analytical right-hand-side function. If this is non-empty, source-data assembly is skipped.",
+            "pattern": "10",
+            "pattern_description": "[Anything]",
+            "actions": "10"
+        },
+        "file":
+        {
+            "value": "",
+            "default_value": "",
+            "documentation": "Source-data file. Supported formats depend on the selected RHS assembly strategy.",
+            "pattern": "8",
+            "pattern_description": "[Anything]",
+            "actions": "8"
+        },
+        "is regular grid":
+        {
+            "value": "false",
+            "default_value": "false",
+            "documentation": "Specify whether the source data is stored on a regular grid with spacing 1.",
+            "pattern": "9",
+            "pattern_description": "[Bool]",
+            "actions": "9"
+        },
+        "rhs assembly strategy":
+        {
+            "value": "standard_quadrature",
+            "default_value": "standard_quadrature",
+            "documentation": "Choose how source data is integrated into the finite-element right-hand side.",
+            "pattern": "11",
+            "pattern_description": "[Selection source_point_quadrature|standard_quadrature|standard_quadrature_fast ]",
+            "actions": "11"
+        }
+    }
+}

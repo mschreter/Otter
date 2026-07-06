@@ -1,14 +1,26 @@
 {
-  "screening length": "30.0874",
-  "mesh": "./mesh_200.vtk",
-  "n refinements": "1",
-  "enable gmg": "false",
-  "particle file": "./data_200.tif",
-  "dim": "3",
-  "degree": "2",
-  "output name": "spot_200",
-  "use simplex mesh": "true",
-  "particle integration rhs": "quadrature_point_fast",
-  "particle file is regular grid": "true",
-  "enable wall time": "true"
+  "problem": {
+    "dimension": "3",
+    "screening length": "30.0874"
+  },
+  "mesh": {
+    "type": "./mesh_200.vtk",
+    "global refinements": "1",
+    "use simplex mesh": "true"
+  },
+  "finite element": {
+    "degree": "2"
+  },
+  "source data": {
+    "file": "./data_200.tif",
+    "is regular grid": "true",
+    "rhs assembly strategy": "standard_quadrature_fast"
+  },
+  "multigrid": {
+    "enable": "false"
+  },
+  "output": {
+    "name": "spot_200",
+    "print wall times": "true"
+  }
 }

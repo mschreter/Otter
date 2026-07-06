@@ -1,13 +1,25 @@
 {
-  "screening length": "2",
-  "mesh": "hyper_cube",
-  "mesh arguments": "0.0:10.0:false",
-  "rhs function": "cos(x/10*3.14159265359)",
-  "n refinements": "10",
-  "enable gmg": "false",
-  "dim": "1",
-  "degree": "1",
-  "output paraview": "true",
-  "output name": "1D_2mm",
-  "enable wall time": "false"
+  "problem": {
+    "dimension": "1",
+    "screening length": "2"
+  },
+  "mesh": {
+    "type": "hyper_cube",
+    "arguments": "0.0:10.0:false",
+    "global refinements": "10"
+  },
+  "finite element": {
+    "degree": "1"
+  },
+  "source data": {
+    "analytical function": "cos(x/10*3.14159265359)"
+  },
+  "geometric multigrid": {
+    "enable": "false"
+  },
+  "output": {
+    "name": "1D_2mm",
+    "write paraview files": "true",
+    "print wall times": "false"
+  }
 }

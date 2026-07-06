@@ -1,13 +1,25 @@
 {
-  "screening length": "150",
-  "mesh": "mesh/hex8_coarse.inp",
-  "n refinements": "1",
-  "enable gmg": "false",
-  "source data file": "points/allPoints_sampleFac100.xyz",
-  "dim": "3",
-  "degree": "1",
-  "output paraview": "false",
-  "output name": "hex8_coarse_screening150_degree1_sampleFac100",
-  "enable wall time": "false",
-  "source rhs assembly strategy": "source_point_quadrature"
+  "problem": {
+    "dimension": "3",
+    "screening length": "150"
+  },
+  "mesh": {
+    "type": "mesh/hex8_coarse.inp",
+    "global refinements": "1"
+  },
+  "finite element": {
+    "degree": "1"
+  },
+  "source data": {
+    "file": "points/allPoints_sampleFac100.xyz",
+    "rhs assembly strategy": "source_point_quadrature"
+  },
+  "multigrid": {
+    "enable": "false"
+  },
+  "output": {
+    "name": "hex8_coarse_screening150_degree1_sampleFac100",
+    "write paraview files": "false",
+    "print wall times": "false"
+  }
 }

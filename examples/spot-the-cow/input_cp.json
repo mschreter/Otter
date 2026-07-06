@@ -1,14 +1,26 @@
 {
-  "screening length": "0.25",
-  "mesh": "./mesh/mesh.vtk",
-  "n refinements": "2",
-  "enable gmg": "false",
-  "particle file": "./data_002.xyz",
-  "dim": "3",
-  "degree": "1",
-  "output name": "result_cp",
-  "output memory": true,
-  "use simplex mesh": "true",
-  "particle integration rhs": "quadrature_point",
-  "enable wall time": "true"
+  "problem": {
+    "dimension": "3",
+    "screening length": "0.25"
+  },
+  "mesh": {
+    "type": "./mesh/mesh.vtk",
+    "global refinements": "2",
+    "use simplex mesh": "true"
+  },
+  "finite element": {
+    "degree": "1"
+  },
+  "source data": {
+    "file": "./data_002.xyz",
+    "rhs assembly strategy": "standard_quadrature"
+  },
+  "geometric multigrid": {
+    "enable": "false"
+  },
+  "output": {
+    "name": "result_cp",
+    "print memory usage": true,
+    "print wall times": "true"
+  }
 }

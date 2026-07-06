@@ -1,11 +1,23 @@
 {
-  "screening length": "0.1",
-  "mesh": "./mesh/mesh.vtk",
-  "n refinements": "0",
-  "enable gmg": "false",
-  "particle file": "./data_002.csv",
-  "dim": "3",
-  "degree": "1",
-  "output name": "result",
-  "use simplex mesh": "true"
+  "problem": {
+    "dimension": "3",
+    "screening length": "0.1"
+  },
+  "mesh": {
+    "type": "./mesh/mesh.vtk",
+    "global refinements": "0",
+    "use simplex mesh": "true"
+  },
+  "finite element": {
+    "degree": "1"
+  },
+  "source data": {
+    "file": "./data_002.csv"
+  },
+  "multigrid": {
+    "enable": "false"
+  },
+  "output": {
+    "name": "result"
+  }
 }

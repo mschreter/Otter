@@ -1,12 +1,24 @@
 {
-  "screening length": "150",
-  "mesh": "mesh/tet4_coarse.vtk",
-  "n refinements": "1",
-  "enable gmg": "false",
-  "source data file": "mesh/allPoints_sampleFac100.xyz",
-  "source rhs assembly strategy": "standard_quadrature",
-  "dim": "3",
-  "degree": "1",
-  "output name": "tet4_coarse_screening150_degree1_sampleFac100",
-  "use simplex mesh": "true"
+  "problem": {
+    "dimension": "3",
+    "screening length": "150"
+  },
+  "mesh": {
+    "type": "mesh/tet4_coarse.vtk",
+    "global refinements": "1",
+    "use simplex mesh": "true"
+  },
+  "finite element": {
+    "degree": "1"
+  },
+  "source data": {
+    "file": "points/allPoints_sampleFac100.xyz",
+    "rhs assembly strategy": "standard_quadrature"
+  },
+  "geometric multigrid": {
+    "enable": "false"
+  },
+  "output": {
+    "name": "tet4_coarse_screening150_degree1_sampleFac100"
+  }
 }

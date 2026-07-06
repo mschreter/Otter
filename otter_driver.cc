@@ -91,7 +91,7 @@ run(const ScreenedPoissonParameters &params, const std::filesystem::path &input_
   using MGTransferType = MGTransferGlobalCoarsening<dim, VectorTypeMG>;
 
   const unsigned int min_level = 0;
-  const unsigned int max_level = params.n_refinements;
+  const unsigned int max_level = params.mesh.n_global_refinements;
 
   const MPI_Comm comm = MPI_COMM_WORLD;
 
@@ -102,35 +102,36 @@ run(const ScreenedPoissonParameters &params, const std::filesystem::path &input_
   print_section(pcout, "Problem setup");
 
   print_entry(pcout, "Dimension", dim);
-  print_entry(pcout, "Degree", params.fe_degree);
+  print_entry(pcout, "Degree", params.finite_element.degree);
 
-  if (params.verbosity > 0)
+  if (params.output.verbosity > 0)
     print_entry(pcout, "MPI ranks", dealii::Utilities::MPI::n_mpi_processes(comm));
 
   TimerOutput timer(MPI_COMM_WORLD,
                     pcout,
-                    params.enable_wall_times ? TimerOutput::summary : TimerOutput::never,
+                    params.output.print_wall_times ? TimerOutput::summary : TimerOutput::never,
                     TimerOutput::wall_times);
   timer.enter_subsection("Create Triangulation");
   std::shared_ptr<Function<dim, Number>> dbc_func =
     std::make_shared<Functions::ConstantFunction<dim, Number>>(1.0);
   std::shared_ptr<Function<dim, Number>> rhs_func;
 
-  if (params.rhs_function != "")
+  if (params.source_data.analytical_function != "")
     {
-      // If a csv file is provided as a rhs_function, assume that the rhs
-      // represents a spherical particle packing
-      if (ends_with(params.rhs_function, ".csv"))
+      // If a csv file is provided as the analytical function, assume that it
+      // represents a spherical packing.
+      if (ends_with(params.source_data.analytical_function, ".csv"))
         {
-          const auto sphere_data = read_spherical_packing_data<dim>(params.rhs_function);
+          const auto sphere_data =
+            read_spherical_packing_data<dim>(params.source_data.analytical_function);
           rhs_func = std::make_shared<SphericalParticalPacking<dim, Number>>(sphere_data.first,
                                                                              sphere_data.second);
         }
-      // Alternatively, an analytical function is given through the input file
+      // Alternatively, parse an analytical function given through the input file.
       else
         {
           using Parser = dealii::FunctionParser<dim>; // IMPORTANT: match Number=double
-          rhs_func     = std::make_shared<Parser>(params.rhs_function);
+          rhs_func     = std::make_shared<Parser>(params.source_data.analytical_function);
         }
     }
 
@@ -140,7 +141,7 @@ run(const ScreenedPoissonParameters &params, const std::filesystem::path &input_
     {
       triangulation = std::make_shared<dealii::Triangulation<dim>>();
     }
-  else if (params.use_simplex_mesh)
+  else if (params.mesh.use_simplex_mesh)
     {
       triangulation = std::make_shared<parallel::shared::Triangulation<dim>>(
         MPI_COMM_WORLD,
@@ -158,18 +159,18 @@ run(const ScreenedPoissonParameters &params, const std::filesystem::path &input_
         parallel::distributed::Triangulation<dim>::construct_multigrid_hierarchy);
     }
 
-  if (params.mesh_type == "hyper_cube" || params.mesh_type == "cylinder" ||
-      params.mesh_type == "hyper_rectangle")
+  if (params.mesh.type == "hyper_cube" || params.mesh.type == "cylinder" ||
+      params.mesh.type == "hyper_rectangle")
     {
-      AssertThrow(not params.use_simplex_mesh,
+      AssertThrow(not params.mesh.use_simplex_mesh,
                   ExcMessage("For grid generators, simplices are not supported."));
       GridGenerator::generate_from_name_and_arguments(*triangulation,
-                                                      params.mesh_type,
-                                                      params.mesh_arguments);
+                                                      params.mesh.type,
+                                                      params.mesh.arguments);
     }
   else
     {
-      const auto    mesh_file = input_file_path.parent_path() / params.mesh_type;
+      const auto    mesh_file = input_file_path.parent_path() / params.mesh.type;
       std::ifstream in(mesh_file);
       AssertThrow(in, ExcMessage("Could not open mesh file: " + mesh_file.string()));
 
@@ -182,7 +183,7 @@ run(const ScreenedPoissonParameters &params, const std::filesystem::path &input_
         grid_in.read(mesh_file);
     }
 
-  triangulation->refine_global(params.n_refinements);
+  triangulation->refine_global(params.mesh.n_global_refinements);
 
   set_all_boundary_ids(*triangulation, 0);
   timer.leave_subsection();
@@ -193,28 +194,28 @@ run(const ScreenedPoissonParameters &params, const std::filesystem::path &input_
   std::shared_ptr<Quadrature<dim>> quadrature;
   DoFHandler<dim>                  dof_handler(*triangulation);
 
-  if (params.use_simplex_mesh)
+  if (params.mesh.use_simplex_mesh)
     {
-      mapping =
-        std::make_shared<dealii::MappingFE<dim>>(dealii::FE_SimplexP<dim>(params.fe_degree));
-      quadrature = std::make_shared<dealii::QGaussSimplex<dim>>(params.fe_degree + 1);
-      dof_handler.distribute_dofs(dealii::FE_SimplexP<dim>(params.fe_degree));
+      mapping = std::make_shared<dealii::MappingFE<dim>>(
+        dealii::FE_SimplexP<dim>(params.finite_element.degree));
+      quadrature = std::make_shared<dealii::QGaussSimplex<dim>>(params.finite_element.degree + 1);
+      dof_handler.distribute_dofs(dealii::FE_SimplexP<dim>(params.finite_element.degree));
     }
   else
     {
-      quadrature    = std::make_shared<dealii::QGauss<dim>>(params.fe_degree + 1);
-      const auto fe = dealii::FE_Q<dim>(params.fe_degree);
+      quadrature    = std::make_shared<dealii::QGauss<dim>>(params.finite_element.degree + 1);
+      const auto fe = dealii::FE_Q<dim>(params.finite_element.degree);
       dof_handler.distribute_dofs(fe);
-      mapping = std::make_shared<dealii::MappingQ<dim>>(params.fe_degree);
+      mapping = std::make_shared<dealii::MappingQ<dim>>(params.finite_element.degree);
     }
 
   print_entry(pcout, "Number of Finite Elements", triangulation->n_cells());
   print_entry(pcout, "Number of DoFs", dof_handler.n_dofs());
 
-  if (params.enable_gmg)
+  if (params.multigrid.enable)
     dof_handler.distribute_mg_dofs();
 
-  if (params.output_memory)
+  if (params.output.print_memory_usage)
     {
       const double mem_dof =
         dealii::Utilities::MPI::sum(dof_handler.memory_consumption() / (1024.0 * 1024.0 * 1024),
@@ -229,7 +230,7 @@ run(const ScreenedPoissonParameters &params, const std::filesystem::path &input_
   AffineConstraints<Number> active_constraints;
   active_constraints.reinit(dof_handler.locally_owned_dofs(),
                             DoFTools::extract_locally_relevant_dofs(dof_handler));
-  if (not params.neumann_bc)
+  if (not params.problem.use_neumann_bc)
     {
       active_constraints.reinit(dof_handler.locally_owned_dofs(),
                                 DoFTools::extract_locally_relevant_dofs(dof_handler));
@@ -238,7 +239,7 @@ run(const ScreenedPoissonParameters &params, const std::filesystem::path &input_
     }
   active_constraints.close();
 
-  MatrixType active_operator(params.screening_length);
+  MatrixType active_operator(params.problem.screening_length);
   active_operator.reinit(*mapping, dof_handler, active_constraints, *quadrature);
 
   VectorType solution, src;
@@ -266,49 +267,56 @@ run(const ScreenedPoissonParameters &params, const std::filesystem::path &input_
 
       if constexpr (dim > 1)
         {
-          const auto source_data_file = input_file_path.parent_path() / params.source_data_file;
+          const auto source_data_file = input_file_path.parent_path() / params.source_data.file;
 
-          if (params.source_rhs_assembly_strategy == "source_point_quadrature")
+          switch (params.source_data.assembly_strategy())
             {
-              const auto output_file_name = params.output_name + "_source_points.vtu";
-              Otter::assemble_rhs_from_source_point_quadrature<dim, Number, VectorType>(
-                src,
-                *mapping,
-                *triangulation,
-                source_data_file.string(),
-                active_operator.get_matrix_free(),
-                output_file_name,
-                params.output_source_data,
-                params.output_memory);
-            }
-          else if (params.source_rhs_assembly_strategy == "standard_quadrature")
-            {
-              const auto output_file_name = params.output_name + "_particles.vtk";
-              Otter::assemble_rhs_from_standard_quadrature<dim, Number, Number, VectorType>(
-                src,
-                *mapping,
-                source_data_file.string(),
-                active_operator.get_matrix_free(),
-                output_file_name,
-                params.output_source_data,
-                params.output_memory);
-            }
-          else if (params.source_rhs_assembly_strategy == "standard_quadrature_fast")
-            {
-              const auto output_file_name = params.output_name + "_particles.vtk";
-              Otter::assemble_rhs_from_standard_quadrature_fast<dim, Number, VectorType>(
-                src,
-                *mapping,
-                source_data_file.string(),
-                active_operator.get_matrix_free(),
-                output_file_name,
-                params.source_data_is_regular_grid,
-                params.output_source_data,
-                params.output_memory);
-            }
-          else
-            {
-              AssertThrow(false, ExcNotImplemented());
+                case SourceRhsAssemblyStrategy::source_point_quadrature: {
+                  const auto output_file_name = params.output.name + "_source_points.vtu";
+
+                  Otter::assemble_rhs_from_source_point_quadrature<dim, Number, VectorType>(
+                    src,
+                    *mapping,
+                    *triangulation,
+                    source_data_file.string(),
+                    active_operator.get_matrix_free(),
+                    output_file_name,
+                    params.output.write_source_data,
+                    params.output.print_memory_usage);
+
+                  break;
+                }
+
+                case SourceRhsAssemblyStrategy::standard_quadrature: {
+                  const auto output_file_name = params.output.name + "_source_points.vtk";
+
+                  Otter::assemble_rhs_from_standard_quadrature<dim, Number, Number, VectorType>(
+                    src,
+                    *mapping,
+                    source_data_file.string(),
+                    active_operator.get_matrix_free(),
+                    output_file_name,
+                    params.output.write_source_data,
+                    params.output.print_memory_usage);
+
+                  break;
+                }
+
+                case SourceRhsAssemblyStrategy::standard_quadrature_fast: {
+                  const auto output_file_name = params.output.name + "_source_points.vtk";
+
+                  Otter::assemble_rhs_from_standard_quadrature_fast<dim, Number, VectorType>(
+                    src,
+                    *mapping,
+                    source_data_file.string(),
+                    active_operator.get_matrix_free(),
+                    output_file_name,
+                    params.source_data.is_regular_grid,
+                    params.output.write_source_data,
+                    params.output.print_memory_usage);
+
+                  break;
+                }
             }
         }
 
@@ -316,21 +324,27 @@ run(const ScreenedPoissonParameters &params, const std::filesystem::path &input_
       timer.leave_subsection();
     }
 
-  if (params.output_memory)
+  if (params.output.print_memory_usage)
     {
       dealii::Utilities::System::get_memory_stats(mem_after);
       print_memory_stats(mem_before, mem_after, MPI_COMM_WORLD, "create_rhs");
     }
 
   // Finally, solve.
-  ReductionControl solver_control(params.maxiter, params.abstol, params.reltol, false, false);
+  ReductionControl solver_control(params.linear_solver.max_iterations,
+                                  params.linear_solver.absolute_tolerance,
+                                  params.linear_solver.relative_tolerance,
+                                  false,
+                                  false);
 
-  if (params.enable_gmg)
+  if (params.multigrid.enable)
     {
       timer.enter_subsection("Setup GMG");
       print_entry(pcout, "Preconditioner", "GMG");
       MGLevelObject<AffineConstraints<NumberMG>> mg_constraints(min_level, max_level);
-      MGLevelObject<LevelMatrixType> mg_operators(min_level, max_level, params.screening_length);
+      MGLevelObject<LevelMatrixType>             mg_operators(min_level,
+                                                  max_level,
+                                                  params.problem.screening_length);
 
       MGLevelObject<MGTwoLevelTransfer<dim, VectorTypeMG>> mg_transfers(min_level, max_level);
 
@@ -378,9 +392,9 @@ run(const ScreenedPoissonParameters &params, const std::filesystem::path &input_
           smoother_data[level].preconditioner = std::make_shared<SmootherPreconditionerType>();
           mg_operators[level].compute_inverse_diagonal(
             smoother_data[level].preconditioner->get_vector());
-          smoother_data[level].smoothing_range     = params.smoother_smoothing_range;
-          smoother_data[level].degree              = params.smoother_degree;
-          smoother_data[level].eig_cg_n_iterations = params.smoother_eig_cg_n_iterations;
+          smoother_data[level].smoothing_range     = params.multigrid.smoother.smoothing_range;
+          smoother_data[level].degree              = params.multigrid.smoother.degree;
+          smoother_data[level].eig_cg_n_iterations = params.multigrid.smoother.eigen_cg_iterations;
           smoother_data[level].constraints.copy_from(mg_constraints[level]);
         }
 
@@ -395,9 +409,9 @@ run(const ScreenedPoissonParameters &params, const std::filesystem::path &input_
         }
 
       // Initialize coarse-grid solver.
-      ReductionControl              coarse_grid_solver_control(params.coarse_solver_maxiter,
-                                                  params.coarse_solver_abstol,
-                                                  params.coarse_solver_reltol,
+      ReductionControl coarse_grid_solver_control(params.multigrid.coarse_solver.max_iterations,
+                                                  params.multigrid.coarse_solver.absolute_tolerance,
+                                                  params.multigrid.coarse_solver.relative_tolerance,
                                                   false,
                                                   false);
       SolverGMRES<VectorTypeDouble> coarse_grid_solver(coarse_grid_solver_control);
@@ -411,12 +425,12 @@ run(const ScreenedPoissonParameters &params, const std::filesystem::path &input_
 
       std::unique_ptr<MGCoarseGridBase<VectorTypeMG>> mg_coarse;
 
-      if (params.coarse_solver_type == "gmres_with_amg")
+      if (params.multigrid.coarse_solver.type == "gmres_with_amg")
         {
           TrilinosWrappers::PreconditionAMG::AdditionalData amg_data;
-          amg_data.smoother_sweeps = params.coarse_solver_smoother_sweeps;
-          amg_data.n_cycles        = params.coarse_solver_n_cycles;
-          amg_data.smoother_type   = params.coarse_solver_smoother_type.c_str();
+          amg_data.smoother_sweeps = params.multigrid.coarse_solver.smoother_sweeps;
+          amg_data.n_cycles        = params.multigrid.coarse_solver.n_v_cycles;
+          amg_data.smoother_type   = params.multigrid.coarse_solver.smoother_type.c_str();
 
           // GMRES with AMG as preconditioner
           precondition_amg.initialize(mg_operators[min_level].get_system_matrix(), amg_data);
@@ -427,7 +441,7 @@ run(const ScreenedPoissonParameters &params, const std::filesystem::path &input_
                                                                    decltype(precondition_amg)>>(
             coarse_grid_solver, mg_operators[min_level].get_system_matrix(), precondition_amg);
         }
-      else if ("direct")
+      else if (params.multigrid.coarse_solver.type == "direct")
         {
           precondition_direct.initialize(mg_operators[min_level].get_system_matrix());
 
@@ -476,21 +490,21 @@ run(const ScreenedPoissonParameters &params, const std::filesystem::path &input_
 
   print_entry(pcout, "||u||l2", solution.l2_norm());
 
-  if (params.output_memory)
+  if (params.output.print_memory_usage)
     {
       dealii::Utilities::System::get_memory_stats(mem_after);
       print_memory_stats(mem_after, mem_after_solve, MPI_COMM_WORLD, "solve");
     }
 
-  if (params.compute_L2_norm_solution)
+  if (params.output.compute_solution_l2)
     {
       // use a higher order quadrature rule for computing the L2 norm
       std::shared_ptr<Quadrature<dim>> quadrature_L2;
-      if (params.use_simplex_mesh)
+      if (params.mesh.use_simplex_mesh)
         quadrature_L2 = std::make_shared<dealii::QGaussSimplex<dim>>(
-          std::min(static_cast<int>(params.fe_degree + 2), 4));
+          std::min(static_cast<int>(params.finite_element.degree + 2), 4));
       else
-        quadrature_L2 = std::make_shared<dealii::QGauss<dim>>(params.fe_degree + 2);
+        quadrature_L2 = std::make_shared<dealii::QGauss<dim>>(params.finite_element.degree + 2);
 
       Vector<Number> cell_wise_error(triangulation->n_active_cells());
       const auto     zero_func =
@@ -512,7 +526,7 @@ run(const ScreenedPoissonParameters &params, const std::filesystem::path &input_
       print_entry(pcout, "||u||L2", error);
     }
 
-  if (params.output_paraview)
+  if (params.output.write_paraview)
     {
       timer.enter_subsection("Output");
       VectorType rhs_projected;
@@ -547,12 +561,12 @@ run(const ScreenedPoissonParameters &params, const std::filesystem::path &input_
       Vector<Number> ranks(triangulation->n_active_cells());
       ranks = Utilities::MPI::this_mpi_process(comm);
       data_out.add_data_vector(ranks, "ranks");
-      data_out.build_patches(*mapping, params.fe_degree);
-      data_out.write_vtu_in_parallel(params.output_name + ".vtu", MPI_COMM_WORLD);
+      data_out.build_patches(*mapping, params.finite_element.degree);
+      data_out.write_vtu_in_parallel(params.output.name + ".vtu", MPI_COMM_WORLD);
       timer.leave_subsection();
     }
 
-  if (params.enable_wall_times)
+  if (params.output.print_wall_times)
     timer.print_wall_time_statistics(MPI_COMM_WORLD);
 }
 
@@ -616,7 +630,7 @@ main(int argc, char **argv)
 
       prm.parse_input_from_json(file, true);
 
-      if (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0 && params.verbosity > 0)
+      if (Utilities::MPI::this_mpi_process(MPI_COMM_WORLD) == 0 && params.output.verbosity > 0)
         prm.print_parameters(std::cout, ParameterHandler::OutputStyle::ShortJSON);
     }
   else
@@ -629,18 +643,18 @@ main(int argc, char **argv)
                              "  otter --help"));
     }
 
-  if (params.dim == 1)
+  if (params.problem.dimension == 1)
     run<1, double, float>(params, input_file_path);
-  else if (params.dim == 2)
+  else if (params.problem.dimension == 2)
     run<2, double, float>(params, input_file_path);
-  else if (params.dim == 3)
+  else if (params.problem.dimension == 3)
     run<3, double, float>(params, input_file_path);
   else
     {
       AssertThrow(false, ExcMessage("Your run command is wrong."));
     }
 
-  if (params.output_memory)
+  if (params.output.print_memory_usage)
     {
       dealii::Utilities::System::get_memory_stats(mem_after);
       print_memory_stats(mem_before, mem_after, MPI_COMM_WORLD, "main");
