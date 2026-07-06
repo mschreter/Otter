@@ -13,16 +13,16 @@ Problem setup
 
 Assembly of the right-hand side
 ───────────────────────────────────────────────────────────────
- Source values read                  : 965660
-Source points global insertion finished: 964082
- ||RHS||l2                           : 2.3074e+06
+ Source values read                  : 674
+Source points global insertion finished: 674
+ ||RHS||l2                           : 220935
  Preconditioner                      : AMG
 
 Linear Solver
 ───────────────────────────────────────────────────────────────
- Iterations:                         : 17
- ||u||l2                             : 132.982
+ Iterations:                         : 18
+ ||u||l2                             : 2.3925
 
 Post-Processing
 ───────────────────────────────────────────────────────────────
- ||u||L2                             : 16061.9
+ ||u||L2                             : 291.091
