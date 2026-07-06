@@ -1,4 +1,4 @@
-name: Pull request run of GitHub CI
+name: Run ctest
 
 on:
   push:
