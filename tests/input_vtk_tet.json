@@ -3,10 +3,10 @@
   "mesh": "mesh/tet4_coarse.vtk",
   "n refinements": "1",
   "enable gmg": "false",
-  "particle file": "points/allPoints_sampleFac100.xyz",
+  "source data file": "points/allPoints_sampleFac100.xyz",
   "dim": "3",
   "degree": "1",
   "output name": "tet4_coarse_screening150_degree1_sampleFac100",
   "use simplex mesh": "true",
-  "particle integration rhs": "particle"
+  "source rhs assembly strategy": "source_point_quadrature"
 }

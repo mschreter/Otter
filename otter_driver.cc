@@ -46,6 +46,7 @@
 #include <deal.II/numerics/vector_tools.h>
 
 #include <otter/multigrid.h>
+#include <otter/parameters.h>
 #include <otter/screened_poisson_operator.h>
 #include <otter/source_data_rhs.h>
 #include <otter/utils.h>
@@ -76,131 +77,9 @@ set_all_boundary_ids(Triangulation<dim> &tria, const types::boundary_id new_id)
     }
 }
 
-struct Parameters
-{
-  // general settings
-  unsigned int n_refinements                 = 5;
-  unsigned int fe_degree                     = 1;
-  double       screening_length              = 0;
-  bool         neumann_bc                    = true;
-  int          dim                           = 3;
-  std::string  mesh_type                     = "";
-  std::string  mesh_arguments                = "";
-  std::string  particle_file                 = "";
-  bool         particle_file_is_regular_grid = false;
-  std::string  rhs_function                  = "";
-  bool         enable_gmg                    = false;
-  bool         use_simplex_mesh              = false;
-  std::string  rhs_from_particle_formulation = "quadrature_point";
-
-  // iterative solver (GMRES)
-  unsigned int maxiter = 10000;
-  double       abstol  = 1e-20;
-  double       reltol  = 1e-10;
-
-  // multigrid smoother
-  std::string  smoother_type                = "chebyshev";
-  double       smoother_smoothing_range     = 20;
-  unsigned int smoother_degree              = 5;
-  unsigned int smoother_eig_cg_n_iterations = 20;
-
-  // multigrid coarse-grid solver
-  std::string  coarse_solver_type            = "direct";
-  unsigned int coarse_solver_maxiter         = 10000;
-  double       coarse_solver_abstol          = 1e-20;
-  double       coarse_solver_reltol          = 1e-4;
-  unsigned int coarse_solver_smoother_sweeps = 1;
-  unsigned int coarse_solver_n_cycles        = 1;
-  std::string  coarse_solver_smoother_type   = "ILU";
-
-  bool         compute_L2_norm_solution = true;
-  bool         output_paraview          = true;
-  bool         output_particles         = true;
-  std::string  output_name              = "output";
-  bool         enable_wall_times        = false;
-  bool         output_memory            = false;
-  unsigned int verbosity                = 0;
-
-  void
-  add_parameters(dealii::ParameterHandler &prm)
-  {
-    prm.add_parameter("verbosity",
-                      verbosity,
-                      "Verbosity. Choose 0 for tests and 1 for detailed output.");
-    prm.add_parameter("dim", dim, "Set the dimension.");
-    prm.add_parameter("n refinements", n_refinements, "Set the number of global refinements.");
-    prm.add_parameter("screening length", screening_length, "Sets the screening length.");
-    prm.add_parameter("mesh", mesh_type, "Sets the mesh type.");
-    prm.add_parameter("mesh arguments",
-                      mesh_arguments,
-                      "Sets the arguments if a mesh is created using a grid generator.");
-    prm.add_parameter("particle file", particle_file, "Sets the filename of the particles xyz.");
-    prm.add_parameter("particle file is regular grid",
-                      particle_file_is_regular_grid,
-                      "Specify whether the particle file is a regular grid with spacing 1.");
-    prm.add_parameter("rhs function", rhs_function, "Sets the RHS function.");
-    prm.add_parameter("output name", output_name, "Sets the name of the output file.");
-    prm.add_parameter("degree", fe_degree, "Set the finite element degree.");
-    prm.add_parameter("enable gmg", enable_gmg, "Enable GMG or alternatively use AMG.");
-    prm.add_parameter("use simplex mesh", use_simplex_mesh, "Use simplex mesh.");
-    prm.add_parameter("output name", output_name, "Sets the name of the output file.");
-    prm.add_parameter("neumann bc", neumann_bc, "Set to true.");
-    prm.add_parameter("output memory", output_memory, "Enable output of memory consumbtion.");
-    prm.add_parameter("enable wall time", enable_wall_times, "Enable wall times output.");
-    prm.add_parameter("output paraview", output_paraview, "Enable Paraview output.");
-    prm.add_parameter("compute L2 norm solution",
-                      compute_L2_norm_solution,
-                      "Compute L2 norm of the solution.");
-    prm.add_parameter("output particles", output_particles, "Enable Paraview output.");
-    prm.add_parameter("particle integration rhs",
-                      rhs_from_particle_formulation,
-                      "Compute error vs. reference solution.",
-                      dealii::Patterns::Selection(
-                        "quadrature_point_fast|quadrature_point|particle"));
-
-    prm.enter_subsection("GMRES");
-    {
-      prm.add_parameter("max iterations", maxiter, "Maximum number of GMRES iterations.");
-      prm.add_parameter("absolute tolerance", abstol, "Absolute convergence tolerance.");
-      prm.add_parameter("relative tolerance", reltol, "Relative convergence tolerance.");
-    }
-    prm.leave_subsection();
-
-    prm.enter_subsection("Multigrid");
-    {
-      prm.add_parameter("smoother type", smoother_type, "Type of smoother (e.g., chebyshev).");
-      prm.add_parameter("smoother smoothing range", smoother_smoothing_range, "Smoothing range.");
-      prm.add_parameter("smoother degree", smoother_degree, "Degree of the smoother polynomial.");
-      prm.add_parameter("smoother eigen CG iterations",
-                        smoother_eig_cg_n_iterations,
-                        "Number of CG iterations for estimating the largest eigenvalue.");
-      prm.add_parameter("coarse solver type", coarse_solver_type, "Type of coarse grid solver.");
-      prm.add_parameter("coarse solver max iterations",
-                        coarse_solver_maxiter,
-                        "Max CG iterations.");
-      prm.add_parameter("coarse solver absolute tolerance",
-                        coarse_solver_abstol,
-                        "Absolute tolerance.");
-      prm.add_parameter("coarse solver relative tolerance",
-                        coarse_solver_reltol,
-                        "Relative tolerance.");
-      prm.add_parameter("coarse solver smoother sweeps",
-                        coarse_solver_smoother_sweeps,
-                        "Smoother sweeps.");
-      prm.add_parameter("coarse solver V-cycle steps",
-                        coarse_solver_n_cycles,
-                        "Number of V-cycle steps.");
-      prm.add_parameter("coarse solver smoother type",
-                        coarse_solver_smoother_type,
-                        "Smoother type (e.g., ILU).");
-    }
-    prm.leave_subsection();
-  }
-};
-
 template <int dim, typename Number, typename NumberMG>
 void
-run(const Parameters &params, const std::filesystem::path &input_file_path)
+run(const ScreenedPoissonParameters &params, const std::filesystem::path &input_file_path)
 {
   using VectorType       = LinearAlgebra::distributed::Vector<Number>;
   using VectorTypeMG     = LinearAlgebra::distributed::Vector<NumberMG>;
@@ -387,44 +266,44 @@ run(const Parameters &params, const std::filesystem::path &input_file_path)
 
       if constexpr (dim > 1)
         {
-          const auto particle_file = input_file_path.parent_path() / params.particle_file;
+          const auto source_data_file = input_file_path.parent_path() / params.source_data_file;
 
-          if (params.rhs_from_particle_formulation == "particle")
+          if (params.source_rhs_assembly_strategy == "source_point_quadrature")
             {
-              const auto output_file_name = params.output_name + "_particles.vtu";
+              const auto output_file_name = params.output_name + "_source_points.vtu";
               Otter::assemble_rhs_from_source_point_quadrature<dim, Number, VectorType>(
                 src,
                 *mapping,
                 *triangulation,
-                particle_file.string(),
+                source_data_file.string(),
                 active_operator.get_matrix_free(),
                 output_file_name,
-                params.output_particles,
+                params.output_source_data,
                 params.output_memory);
             }
-          else if (params.rhs_from_particle_formulation == "quadrature_point")
+          else if (params.source_rhs_assembly_strategy == "standard_quadrature")
             {
               const auto output_file_name = params.output_name + "_particles.vtk";
               Otter::assemble_rhs_from_standard_quadrature<dim, Number, Number, VectorType>(
                 src,
                 *mapping,
-                particle_file.string(),
+                source_data_file.string(),
                 active_operator.get_matrix_free(),
                 output_file_name,
-                params.output_particles,
+                params.output_source_data,
                 params.output_memory);
             }
-          else if (params.rhs_from_particle_formulation == "quadrature_point_fast")
+          else if (params.source_rhs_assembly_strategy == "standard_quadrature_fast")
             {
               const auto output_file_name = params.output_name + "_particles.vtk";
               Otter::assemble_rhs_from_standard_quadrature_fast<dim, Number, VectorType>(
                 src,
                 *mapping,
-                particle_file.string(),
+                source_data_file.string(),
                 active_operator.get_matrix_free(),
                 output_file_name,
-                params.particle_file_is_regular_grid,
-                params.output_particles,
+                params.source_data_is_regular_grid,
+                params.output_source_data,
                 params.output_memory);
             }
           else
@@ -684,7 +563,7 @@ main(int argc, char **argv)
 
   Utilities::System::MemoryStats mem_before, mem_after;
   dealii::Utilities::System::get_memory_stats(mem_before);
-  Parameters params;
+  ScreenedPoissonParameters params;
 
   auto print_help = [&]() {
     std::cout << "OTTER\n"
