@@ -1,3 +1,4 @@
+#include <deal.II/base/conditional_ostream.h>
 #include <deal.II/base/mpi.h>
 
 #include <deal.II/distributed/tria.h>
@@ -38,10 +39,11 @@ test(std::string filename, std::string particle_file)
 
   parallel::distributed::Triangulation<dim> triangulation(MPI_COMM_WORLD);
 
-  GridIn<dim> grid_in;
+  GridIn<dim> grid_in(triangulation);
 
-  grid_in.attach_triangulation(triangulation);
-  grid_in.read(filename);
+
+  std::ifstream in_file(filename);
+  grid_in.read_abaqus(in_file);
 
   triangulation.refine_global(n_refinements);
 

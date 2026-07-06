@@ -8,5 +8,6 @@
   "degree": "1",
   "output paraview": "false",
   "output name": "hex8_coarse_screening150_degree1_sampleFac9",
-  "enable wall time": "false"
+  "enable wall time": "false",
+  "particle integration rhs": "particle"
 }
