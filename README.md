@@ -7,7 +7,7 @@
 
 [![Docker Image](https://img.shields.io/badge/docker-ghcr.io-blue?logo=docker)](https://ghcr.io/mschreter/otter)
 [![Pre-commit](https://github.com/mschreter/otter/actions/workflows/pre-commit.yml/badge.svg)](https://github.com/mschreter/otter/actions/workflows/pre-commit.yml)
-[![Pull request run of GitHub CI](https://github.com/mschreter/Otter/actions/workflows/pull_request_tests.yml/badge.svg)](https://github.com/mschreter/Otter/actions/workflows/pull_request_tests.yml)
+[![GitHub CI](https://github.com/mschreter/Otter/actions/workflows/pull_request_tests.yml/badge.svg)](https://github.com/mschreter/Otter/actions/workflows/pull_request_tests.yml)
 
 # From CT data to homogenized properties
 
