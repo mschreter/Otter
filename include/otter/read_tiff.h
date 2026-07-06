@@ -1,5 +1,6 @@
 #pragma once
 #include <deal.II/base/point.h>
+#include <deal.II/base/mpi.h>
 
 #include <tiffio.h>
 

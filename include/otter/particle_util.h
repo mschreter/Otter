@@ -50,8 +50,8 @@
 #include <deal.II/numerics/vector_tools_integrate_difference.h>
 
 #include <mpi.h>
-#include <read_tiff.h>
-#include <utils.h>
+#include <otter/read_tiff.h>
+#include <otter/utils.h>
 
 #include <fstream>
 #include <iomanip>

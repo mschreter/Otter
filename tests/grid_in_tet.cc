@@ -17,8 +17,8 @@
 
 #include <deal.II/numerics/data_out.h>
 
-#include <particle_util.h>
-#include <utils.h>
+#include <otter/particle_util.h>
+#include <otter/utils.h>
 
 #include <fstream>
 #include <iostream>

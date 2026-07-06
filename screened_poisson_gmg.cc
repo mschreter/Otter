@@ -45,20 +45,15 @@
 #include <deal.II/numerics/data_out.h>
 #include <deal.II/numerics/vector_tools.h>
 
-#include <multigrid.h>
-#include <particle_util.h>
-#include <screened_poisson_operator.h>
+#include <otter/multigrid.h>
+#include <otter/particle_util.h>
+#include <otter/screened_poisson_operator.h>
+#include <otter/utils.h>
 #include <sys/resource.h> // for rusage, getrusage, RUSAGE_SELF
 #include <sys/time.h>     // sometimes also needed on some systems
 #include <sys/types.h>
-#include <utils.h>
 
 #include <filesystem>
-#include <memory>
-#include <sstream>
-
-#include "include/particle_util.h"
-#include "include/utils.h"
 
 using namespace Otter;
 
