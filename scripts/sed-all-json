@@ -1,0 +1,5 @@
+#!/bin/bash
+
+for i in $(find include/ tests/ -type f \( -name "*.json" \) ); do
+    sed -i "$1" "$i"
+done
