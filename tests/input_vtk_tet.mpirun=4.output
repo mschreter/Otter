@@ -13,8 +13,8 @@ Problem setup
 
 Assembly of the right-hand side
 ───────────────────────────────────────────────────────────────
- Properties read                     : 674
-Particles global insertion finished: 671
+ Source values read                  : 674
+Source points global insertion finished: 671
  ||RHS||l2                           : 2.24593e+06
  Preconditioner                      : AMG
 

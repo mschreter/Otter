@@ -13,7 +13,7 @@ Problem setup
 
 Assembly of the right-hand side
 ───────────────────────────────────────────────────────────────
- Properties read                     : 674
+ Source values read                  : 674
  ||RHS||l2                           : 1.46038e+07
  Preconditioner                      : AMG
 

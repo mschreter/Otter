@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
+
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 project(OTTER)
 
 # -----------------------------------------------------------------------------
@@ -18,14 +20,14 @@ message(STATUS "deal.II_DIR: ${deal.II_DIR}")
 message(STATUS "DEAL_II_DIR cache variable: ${DEAL_II_DIR}")
 message(STATUS "DEAL_II_DIR environment variable: $ENV{DEAL_II_DIR}")
 
-if (NOT ${deal.II_FOUND})
-    message(
-            FATAL_ERROR
-            "\n"
-            "*** Could not locate deal.II. ***\n\n"
-            "You may want to either pass a flag -DDEAL_II_DIR=/path/to/deal.II to cmake\n"
-            "or set an environment variable \"DEAL_II_DIR\" that contains this path.")
-endif ()
+if (NOT deal.II_FOUND)
+  message(FATAL_ERROR
+    "\n"
+    "*** Could not locate deal.II. ***\n\n"
+    "You may want to either pass -DDEAL_II_DIR=/path/to/deal.II to cmake\n"
+    "or set the environment variable DEAL_II_DIR to this path."
+  )
+endif()
 
 # -----------------------------------------------------------------------------
 # Initialize deal.II cache variables
@@ -38,27 +40,27 @@ DEAL_II_INITIALIZE_CACHED_VARIABLES()
 find_package(TIFF REQUIRED)
 
 # -----------------------------------------------------------------------------
-# Project library (this is what tests expect: ${PROJECT_NAME}-lib)
+# Project interface library
 # -----------------------------------------------------------------------------
-add_library(${PROJECT_NAME}-lib dummy.cc)
+add_library(${PROJECT_NAME}-lib INTERFACE)
 
-# Use plain signature (no PRIVATE/PUBLIC), to be consistent with deal.II macros
-target_link_libraries(${PROJECT_NAME}-lib TIFF::TIFF)
+target_include_directories(${PROJECT_NAME}-lib
+  INTERFACE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
 
-# Let deal.II add its include paths, flags, libs, etc.
-DEAL_II_SETUP_TARGET(${PROJECT_NAME}-lib)
-
+target_link_libraries(${PROJECT_NAME}-lib
+  INTERFACE
+    TIFF::TIFF
+)
 # -----------------------------------------------------------------------------
 # Main executable
 # -----------------------------------------------------------------------------
-include_directories(include)
+add_executable(otter otter_driver.cc)
 
-add_executable(otter screened_poisson_gmg.cc)
-
-# Link against our project library and TIFF as well
 target_link_libraries(otter
-    ${PROJECT_NAME}-lib
-    TIFF::TIFF)
+  ${PROJECT_NAME}-lib
+)
 
 DEAL_II_SETUP_TARGET(otter)
 

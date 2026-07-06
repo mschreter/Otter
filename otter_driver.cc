@@ -46,8 +46,8 @@
 #include <deal.II/numerics/vector_tools.h>
 
 #include <otter/multigrid.h>
-#include <otter/particle_util.h>
 #include <otter/screened_poisson_operator.h>
+#include <otter/source_data_rhs.h>
 #include <otter/utils.h>
 #include <sys/resource.h> // for rusage, getrusage, RUSAGE_SELF
 #include <sys/time.h>     // sometimes also needed on some systems
@@ -392,7 +392,7 @@ run(const Parameters &params, const std::filesystem::path &input_file_path)
           if (params.rhs_from_particle_formulation == "particle")
             {
               const auto output_file_name = params.output_name + "_particles.vtu";
-              create_rhs_from_solid_particles<dim, Number, VectorType>(
+              Otter::assemble_rhs_from_source_point_quadrature<dim, Number, VectorType>(
                 src,
                 *mapping,
                 *triangulation,
@@ -405,7 +405,7 @@ run(const Parameters &params, const std::filesystem::path &input_file_path)
           else if (params.rhs_from_particle_formulation == "quadrature_point")
             {
               const auto output_file_name = params.output_name + "_particles.vtk";
-              create_rhs_from_solid_particles_closest_point<dim, Number, float, VectorType>(
+              Otter::assemble_rhs_from_standard_quadrature<dim, Number, Number, VectorType>(
                 src,
                 *mapping,
                 particle_file.string(),
@@ -417,7 +417,7 @@ run(const Parameters &params, const std::filesystem::path &input_file_path)
           else if (params.rhs_from_particle_formulation == "quadrature_point_fast")
             {
               const auto output_file_name = params.output_name + "_particles.vtk";
-              create_rhs_from_solid_particles_closest_point_fast<dim, Number, VectorType>(
+              Otter::assemble_rhs_from_standard_quadrature_fast<dim, Number, VectorType>(
                 src,
                 *mapping,
                 particle_file.string(),
@@ -628,9 +628,6 @@ run(const Parameters &params, const std::filesystem::path &input_file_path)
       const auto error = VectorTools::compute_global_error(*triangulation,
                                                            cell_wise_error,
                                                            VectorTools::NormType::L2_norm);
-      // pcout << "|solution|_L2 " << std::setw(15) << std::setprecision(15) << std::scientific
-      //<< error << std::endl;
-
       print_section(pcout, "Post-Processing");
 
       print_entry(pcout, "||u||L2", error);

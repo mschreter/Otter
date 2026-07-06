@@ -17,7 +17,7 @@
 
 #include <deal.II/numerics/data_out.h>
 
-#include <otter/particle_util.h>
+#include <otter/source_data_rhs.h>
 #include <otter/utils.h>
 
 #include <fstream>
@@ -75,7 +75,7 @@ test(std::string filename, std::string particle_file)
 
   // APPROACH 1:
   dealii::Particles::ParticleHandler<dim> particle_handler;
-  create_rhs_from_solid_particles<dim, Number, VectorType>(
+  Otter::assemble_rhs_from_source_point_quadrature<dim, Number, VectorType>(
     rhs, mapping, triangulation, particle_file, matrix_free, "particle.vtu", false, false);
 
   // APPROACH 2:
