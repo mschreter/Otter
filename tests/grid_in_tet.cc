@@ -28,6 +28,7 @@ template <int dim, typename Number>
 void
 test(std::string filename, std::string particle_file)
 {
+  using namespace Otter;
   using namespace dealii;
   using VectorType          = LinearAlgebra::distributed::Vector<Number>;
   using VectorizedArrayType = VectorizedArray<Number>;

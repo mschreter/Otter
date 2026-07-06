@@ -18,6 +18,9 @@
 
 using namespace dealii;
 
+namespace Otter
+{
+
 template <int dim, typename Number, typename VectorizedArrayType = VectorizedArray<Number>>
 class ScreenedPoissonOperator : public Subscriptor
 {
@@ -307,3 +310,4 @@ private:
   mutable VectorType                     diagonal;
   mutable bool                           valid_system;
 };
+}

@@ -60,6 +60,8 @@
 #include "include/particle_util.h"
 #include "include/utils.h"
 
+using namespace Otter;
+
 template <int dim>
 void
 set_all_boundary_ids(Triangulation<dim> &tria, const types::boundary_id new_id)

@@ -2,6 +2,8 @@
 #include <deal.II/base/mpi.h>
 #include <deal.II/base/point.h>
 
+namespace Otter {
+
 void
 print_banner(const dealii::ConditionalOStream &pcout)
 {
@@ -229,4 +231,67 @@ write_vtk_with_points(const std::vector<dealii::Point<dim, Number>> &points,
   out << "LOOKUP_TABLE default\n";
   for (const auto &v : values)
     out << v[0] << "\n";
+}
+
+/**
+ * @brief Project a vector-valued function into the finite element space using a
+ * mass matrix solve.
+ *
+ * This function performs a projection of the input vector `vec_in` onto the
+ * finite element space associated with the given `DoFHandler` by solving a mass
+ * matrix system using a conjugate gradient (CG) solver. The result is written
+ * to `vec_out`.
+ *
+ * Internally, the function uses deal.II's `MatrixFree` infrastructure and
+ * `MassOperator` to efficiently apply the mass matrix in a matrix-free fashion.
+ * Diagonal preconditioning is used for the CG solver.
+ *
+ * @tparam n_components Number of vector components to be projected.
+ * @tparam dim Spatial dimension of the problem.
+ * @tparam VectorType A vector type compatible with deal.II linear algebra,
+ * e.g., `LinearAlgebra::distributed::Vector`.
+ *
+ * @param[in] mapping The mapping from reference to real cells (e.g., MappingQ).
+ * @param[in] dof The DoFHandler defining the finite element space.
+ * @param[in] constraints Affine constraints to apply (e.g., Dirichlet boundary
+ * conditions).
+ * @param[in] quadrature The quadrature formula used for mass matrix
+ * integration.
+ * @param[in] vec_in The input vector to be projected.
+ * @param[out] vec_out The output vector where the projected result is stored.
+ *
+ * @throws dealii::SolverControl::NoConvergence If the solver fails to converge.
+ */
+template <int n_components, int dim, typename VectorType>
+inline void
+project_vector(const dealii::Mapping<dim>                                       &mapping,
+               const dealii::DoFHandler<dim>                                    &dof,
+               const dealii::AffineConstraints<typename VectorType::value_type> &constraints,
+               const dealii::Quadrature<dim>                                    &quadrature,
+               const VectorType                                                 &vec_in,
+               VectorType                                                       &vec_out)
+{
+  using Number = typename VectorType::value_type;
+  using namespace dealii;
+
+  typename MatrixFree<dim, Number>::AdditionalData additional_data;
+  additional_data.tasks_parallel_scheme = MatrixFree<dim, Number>::AdditionalData::partition_color;
+  additional_data.mapping_update_flags  = (update_values | update_JxW_values);
+
+  const auto matrix_free = std::make_shared<MatrixFree<dim, Number>>();
+  matrix_free->reinit(mapping, dof, constraints, quadrature, additional_data);
+
+  using MatrixType = MatrixFreeOperators::MassOperator<dim, -1, 0, n_components, VectorType>;
+  MatrixType mass_matrix;
+  mass_matrix.initialize(matrix_free);
+
+  mass_matrix.compute_diagonal();
+
+  ReductionControl                  control(6 * vec_in.size(), 0., 1e-12, false, false);
+  SolverCG<VectorType>              cg(control);
+  const DiagonalMatrix<VectorType> &preconditioner = *mass_matrix.get_matrix_diagonal_inverse();
+
+  cg.solve(mass_matrix, vec_out, vec_in, preconditioner);
+}
+
 }

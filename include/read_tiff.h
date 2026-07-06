@@ -13,6 +13,9 @@
 #include <string>
 #include <type_traits>
 
+namespace Otter
+{
+
 template <int dim, typename Number = double>
 std::pair<std::vector<Number>, std::array<int, dim>>
 read_tiff_data_only(const std::string &filename)
@@ -541,4 +544,5 @@ closest_point_regular_grid(const dealii::Point<dim>   &query,
 
   out.linear_index = linear;
   return out;
+}
 }
