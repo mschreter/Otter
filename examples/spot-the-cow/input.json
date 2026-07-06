@@ -1,21 +1,22 @@
 {
+  "$schema": "../../schema.json",
   "problem": {
-    "dimension": "3",
-    "screening length": "0.1"
+    "dimension": 3,
+    "screening length": 0.1
   },
   "mesh": {
     "type": "./mesh/mesh.vtk",
-    "global refinements": "0",
-    "use simplex mesh": "true"
+    "global refinements": 0,
+    "use simplex mesh": true
   },
   "finite element": {
-    "degree": "1"
+    "degree": 1
   },
   "source data": {
     "file": "./data_002.csv"
   },
-  "multigrid": {
-    "enable": "false"
+  "geometric multigrid": {
+    "enable": false
   },
   "output": {
     "name": "result"

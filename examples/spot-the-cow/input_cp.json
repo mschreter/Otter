@@ -1,26 +1,27 @@
 {
+  "$schema": "../../schema.json",
   "problem": {
-    "dimension": "3",
-    "screening length": "0.25"
+    "dimension": 3,
+    "screening length": 0.25
   },
   "mesh": {
     "type": "./mesh/mesh.vtk",
-    "global refinements": "2",
-    "use simplex mesh": "true"
+    "global refinements": 2,
+    "use simplex mesh": true
   },
   "finite element": {
-    "degree": "1"
+    "degree": 1
   },
   "source data": {
     "file": "./data_002.xyz",
     "rhs assembly strategy": "standard_quadrature"
   },
   "geometric multigrid": {
-    "enable": "false"
+    "enable": false
   },
   "output": {
     "name": "result_cp",
     "print memory usage": true,
-    "print wall times": "true"
+    "print wall times": true
   }
 }

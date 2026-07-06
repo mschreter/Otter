@@ -1,25 +1,26 @@
 {
+  "$schema": "../schema.json",
   "problem": {
-    "dimension": "1",
-    "screening length": "2"
+    "dimension": 1,
+    "screening length": 2
   },
   "mesh": {
     "type": "hyper_cube",
     "arguments": "0.0:10.0:false",
-    "global refinements": "10"
+    "global refinements": 10
   },
   "finite element": {
-    "degree": "1"
+    "degree": 1
   },
   "source data": {
     "analytical function": "cos(x/10*3.14159265359)"
   },
   "geometric multigrid": {
-    "enable": "false"
+    "enable": false
   },
   "output": {
     "name": "1D_2mm",
-    "write paraview files": "true",
-    "print wall times": "false"
+    "write paraview files": true,
+    "print wall times": false
   }
 }

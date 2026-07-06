@@ -1,22 +1,23 @@
 {
+  "$schema": "../schema.json",
   "problem": {
-    "dimension": "3",
-    "screening length": "150"
+    "dimension": 3,
+    "screening length": 150.0
   },
   "mesh": {
     "type": "mesh/tet4_coarse.vtk",
-    "global refinements": "1",
-    "use simplex mesh": "true"
+    "global refinements": 1,
+    "use simplex mesh": true
   },
   "finite element": {
-    "degree": "1"
+    "degree": 1
   },
   "source data": {
     "file": "points/allPoints_sampleFac100.xyz",
     "rhs assembly strategy": "source_point_quadrature"
   },
   "geometric multigrid": {
-    "enable": "false"
+    "enable": false
   },
   "output": {
     "name": "tet4_coarse_screening150_degree1_sampleFac100"
