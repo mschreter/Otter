@@ -39,7 +39,7 @@
 #include <deal.II/multigrid/mg_matrix.h>
 #include <deal.II/multigrid/mg_smoother.h>
 #include <deal.II/multigrid/mg_tools.h>
-#include <deal.II/multigrid/mg_transfer_global_coarsening.h>
+#include <deal.II/multigrid/mg_transfer_matrix_free.h>
 #include <deal.II/multigrid/multigrid.h>
 
 #include <deal.II/numerics/data_out.h>
@@ -88,7 +88,7 @@ run(const ScreenedPoissonParameters &params, const std::filesystem::path &input_
   using MatrixType      = ScreenedPoissonOperator<dim, Number>;
   using LevelMatrixType = ScreenedPoissonOperator<dim, NumberMG>;
 
-  using MGTransferType = MGTransferGlobalCoarsening<dim, VectorTypeMG>;
+  using MGTransferType = MGTransferMatrixFree<dim, typename VectorTypeMG::value_type>;
 
   const unsigned int min_level = 0;
   const unsigned int max_level = params.mesh.n_global_refinements;
@@ -371,7 +371,7 @@ run(const ScreenedPoissonParameters &params, const std::filesystem::path &input_
         }
 
       // set up transfer operator
-      MGTransferGlobalCoarsening<dim, VectorTypeMG> mg_transfer(mg_constrained_dofs);
+      MGTransferType mg_transfer(mg_constrained_dofs);
       mg_transfer.build(dof_handler, [&](const auto l, auto &vec) {
         mg_operators[l].initialize_dof_vector(vec);
       });
