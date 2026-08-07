@@ -10,9 +10,21 @@
 
 # From CT data to homogenized properties
 
+Otter is an open-source finite element software framework for deriving continuous fields of macroscopic material properties from tomographic imaging data (provided typically as *.tiff files) using screened Poisson averaging. By solving the screened Poisson equation on complex specimen geometries, the method separates the homogenization length scale from the spatial discretization and avoids common boundary artifacts of conventional averaging approaches. Its MPI-parallel, matrix-free implementation is designed for the efficient processing of large three-dimensional datasets. It is based on the deal.II library.
+
+## Examples
 
 
-This repository contains an efficient finite element implementation for solving the screened Poisson equation using the deal.II library.
+
+
+<table style="margin-left: auto; margin-right: auto; border-collapse: separate; border-spacing: 20px;">
+  <tr>
+    <td align="center">
+      <img width="300" class="dark-light" title="Void ratio distribution from µCT imaging of cylindrical sand specimens during triaxial compression" alt="hex8_fine_degree1_screening1200_sampleFac2_screenshot" src="https://github.com/user-attachments/assets/ab6345c9-20d4-4960-8ac0-95d5215aec0d" />
+      <div style="font-style: italic; color: gray; margin-top: 5px;">Void ratio distribution from µCT imaging of cylindrical sand specimens during triaxial compression</div>
+    </td>
+  </tr>
+</table>
 
 ## Running with Docker (recommended for users)
 
