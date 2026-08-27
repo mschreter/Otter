@@ -22,7 +22,7 @@ namespace Otter
 {
 
 template <int dim, typename Number, typename VectorizedArrayType = VectorizedArray<Number>>
-class ScreenedPoissonOperator : public Subscriptor
+class ScreenedPoissonOperator : public EnableObserverPointer
 {
 public:
   using FECellIntegrator = FEEvaluation<dim, -1, 0, 1, Number, VectorizedArrayType>;
