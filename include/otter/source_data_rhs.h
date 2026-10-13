@@ -413,7 +413,7 @@ namespace Otter
     if (enable_memory_stats)
       {
         dealii::Utilities::System::get_memory_stats(mem_after_ptree);
-        print_memory_stats(mem_before, mem_after, MPI_COMM_WORLD, "after ptree");
+        print_memory_stats(mem_before, mem_after_ptree, MPI_COMM_WORLD, "after ptree");
       }
 
     using VectorizedArrayType = VectorizedArray<Number>;

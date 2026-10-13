@@ -492,7 +492,7 @@ run(const ScreenedPoissonParameters &params, const std::filesystem::path &input_
 
   if (params.output.print_memory_usage)
     {
-      dealii::Utilities::System::get_memory_stats(mem_after);
+      dealii::Utilities::System::get_memory_stats(mem_after_solve);
       print_memory_stats(mem_after, mem_after_solve, MPI_COMM_WORLD, "solve");
     }
 

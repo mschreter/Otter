@@ -3,6 +3,7 @@
 #include <deal.II/base/point.h>
 
 #include <fstream>
+#include <iomanip>
 #include <sstream>
 #include <string>
 #include <utility>
@@ -143,36 +144,34 @@ print_memory_stats(const dealii::Utilities::System::MemoryStats &before,
   const int rank   = dealii::Utilities::MPI::this_mpi_process(comm);
   const int nprocs = dealii::Utilities::MPI::n_mpi_processes(comm);
 
-  // local values (MB)
-  const double before_mb = before.VmRSS / 1024.0 / 1024;
-  const double after_mb  = after.VmRSS / 1024.0 / 1024;
-  const double delta_mb  = (after.VmRSS - before.VmRSS) / 1024.0 / 1024;
-
-  // --- per-rank line (optional: guard with rank==0 if too chatty) ---
-  std::cout << std::fixed << std::setprecision(2);
+  // local values (VmRSS is in kB); convert before subtracting, since VmRSS is unsigned
+  const double before_gb = static_cast<double>(before.VmRSS) / 1024.0 / 1024.0;
+  const double after_gb  = static_cast<double>(after.VmRSS) / 1024.0 / 1024.0;
+  const double delta_gb  = after_gb - before_gb;
 
   // --- global aggregates ---
-  double sum_before_mb = 0, max_before_mb = 0, sum_after_mb = 0.0, max_after_mb = 0.0,
-         sum_delta_mb = 0.0;
-  MPI_Allreduce(&before_mb, &sum_before_mb, 1, MPI_DOUBLE, MPI_SUM, comm);
-  MPI_Allreduce(&before_mb, &max_before_mb, 1, MPI_DOUBLE, MPI_MAX, comm);
-  MPI_Allreduce(&after_mb, &sum_after_mb, 1, MPI_DOUBLE, MPI_SUM, comm);
-  MPI_Allreduce(&after_mb, &max_after_mb, 1, MPI_DOUBLE, MPI_MAX, comm);
-  MPI_Allreduce(&delta_mb, &sum_delta_mb, 1, MPI_DOUBLE, MPI_SUM, comm);
+  double sum_before_gb = 0.0, max_before_gb = 0.0, sum_after_gb = 0.0, max_after_gb = 0.0,
+         sum_delta_gb = 0.0;
+  MPI_Allreduce(&before_gb, &sum_before_gb, 1, MPI_DOUBLE, MPI_SUM, comm);
+  MPI_Allreduce(&before_gb, &max_before_gb, 1, MPI_DOUBLE, MPI_MAX, comm);
+  MPI_Allreduce(&after_gb, &sum_after_gb, 1, MPI_DOUBLE, MPI_SUM, comm);
+  MPI_Allreduce(&after_gb, &max_after_gb, 1, MPI_DOUBLE, MPI_MAX, comm);
+  MPI_Allreduce(&delta_gb, &sum_delta_gb, 1, MPI_DOUBLE, MPI_SUM, comm);
 
   if (rank == 0)
     {
-      std::cout << " [" << id << "]  [aggregate] VmRSS before: "
-                << " [" << id << "]  SUM=" << sum_before_mb << " GB, "
-                << " [" << id << "]  AVG=" << (sum_before_mb / nprocs) << " GB/rank, "
-                << " [" << id << "]  MAX=" << max_before_mb << " GB\n";
-      std::cout << " [" << id << "]  [aggregate] VmRSS after: "
-                << " [" << id << "]  SUM=" << sum_after_mb << " GB, "
-                << " [" << id << "]  AVG=" << (sum_after_mb / nprocs) << " GB/rank, "
-                << " [" << id << "]  MAX=" << max_after_mb << " GB\n";
-      std::cout << " [" << id << "]  [aggregate] Δ VmRSS: "
-                << " [" << id << "]  SUM=" << sum_delta_mb << " GB, "
-                << " [" << id << "]  AVG=" << (sum_delta_mb / nprocs) << " GB/rank\n";
+      // format in a local stream to leave the precision of std::cout untouched
+      std::ostringstream out;
+      out << std::fixed << std::setprecision(2);
+      out << " [" << id << "]  [aggregate] VmRSS before: SUM=" << sum_before_gb
+          << " GB, AVG=" << (sum_before_gb / nprocs) << " GB/rank, MAX=" << max_before_gb
+          << " GB\n";
+      out << " [" << id << "]  [aggregate] VmRSS after:  SUM=" << sum_after_gb
+          << " GB, AVG=" << (sum_after_gb / nprocs) << " GB/rank, MAX=" << max_after_gb
+          << " GB\n";
+      out << " [" << id << "]  [aggregate] Δ VmRSS:      SUM=" << sum_delta_gb
+          << " GB, AVG=" << (sum_delta_gb / nprocs) << " GB/rank\n";
+      std::cout << out.str();
     }
 }
 
