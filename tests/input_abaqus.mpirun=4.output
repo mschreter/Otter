@@ -8,7 +8,7 @@ Problem setup
 ───────────────────────────────────────────────────────────────
  Dimension                           : 3
  Degree                              : 1
- Number of Finite Elements           : 24068
+ Number of Finite Elements           : 45600
  Number of DoFs                      : 49289
 
 Assembly of the right-hand side

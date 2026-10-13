@@ -209,7 +209,7 @@ run(const ScreenedPoissonParameters &params, const std::filesystem::path &input_
       mapping = std::make_shared<dealii::MappingQ<dim>>(params.finite_element.degree);
     }
 
-  print_entry(pcout, "Number of Finite Elements", triangulation->n_cells());
+  print_entry(pcout, "Number of Finite Elements", triangulation->n_global_active_cells());
   print_entry(pcout, "Number of DoFs", dof_handler.n_dofs());
 
   if (params.multigrid.enable)
