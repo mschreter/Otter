@@ -590,54 +590,49 @@ namespace Otter
           dummy,
           zero_out);
 
-        const auto voxel_indices_all =
-          dealii::Utilities::MPI::gather<std::vector<std::size_t>>(MPI_COMM_WORLD, voxel_indices, 0);
+        // Exchange with rank 0 point-to-point, one rank at a time: a single gather overflows
+        // MPI's int count limit (2 GB) on large meshes.
         // This will hold the source values for *this rank's* indices, in the same order as
         // `voxel_indices`
-        std::vector<double> ghosted_source_values(voxel_indices.size());
+        std::vector<double> ghosted_source_values;
         const MPI_Comm      comm    = MPI_COMM_WORLD;
         const unsigned int  rank    = dealii::Utilities::MPI::this_mpi_process(comm);
         const unsigned int  n_ranks = dealii::Utilities::MPI::n_mpi_processes(comm);
 
+        const int tag_voxel_indices = 2000;
         const int tag_source_values = 2001;
 
         if (rank == 0)
           {
             const std::vector<double> &values = source_values;
 
-            // keep futures if you want true nonblocking overlap
-            std::vector<dealii::Utilities::MPI::Future<void>> send_futures;
-            send_futures.reserve(n_ranks > 0 ? n_ranks - 1 : 0);
+            ghosted_source_values.resize(voxel_indices.size());
+            for (std::size_t i = 0; i < voxel_indices.size(); ++i)
+              ghosted_source_values[i] = values[voxel_indices[i]];
 
+            // serve the other ranks sequentially to bound memory on rank 0
             for (unsigned int p = 1; p < n_ranks; ++p)
               {
-                const auto &idx_list = voxel_indices_all[p];
+                auto idx_fut = dealii::Utilities::MPI::irecv<std::vector<std::size_t>>(
+                  comm, p, tag_voxel_indices);
+                const auto idx_list = idx_fut.get();
 
-                std::vector<double> send_buffer;
-                send_buffer.reserve(idx_list.size());
-                for (auto idx : idx_list)
-                  send_buffer.push_back(values[idx]);
+                std::vector<double> send_buffer(idx_list.size());
+                for (std::size_t i = 0; i < idx_list.size(); ++i)
+                  send_buffer[i] = values[idx_list[i]];
 
-                send_futures.push_back(
-                  dealii::Utilities::MPI::isend(send_buffer, comm, p, tag_source_values));
+                dealii::Utilities::MPI::isend(send_buffer, comm, p, tag_source_values).wait();
               }
-
-            // root fills its own
-            const auto &idx0 = voxel_indices_all[0];
-            ghosted_source_values.resize(idx0.size());
-            for (std::size_t i = 0; i < idx0.size(); ++i)
-              ghosted_source_values[i] = values[idx0[i]];
-
-            // ensure sends completed (optional if futures will destruct at end of scope)
-            for (auto &f : send_futures)
-              f.wait();
           }
         else
           {
-            auto fut = dealii::Utilities::MPI::irecv<std::vector<double>>(comm, 0, tag_source_values);
+            auto send_fut =
+              dealii::Utilities::MPI::isend(voxel_indices, comm, 0, tag_voxel_indices);
+            auto recv_fut =
+              dealii::Utilities::MPI::irecv<std::vector<double>>(comm, 0, tag_source_values);
 
-            ghosted_source_values = fut.get(); // <-- actual receive happens here
-            // (Optional sanity check)
+            ghosted_source_values = recv_fut.get();
+            send_fut.wait();
             AssertThrow(ghosted_source_values.size() == voxel_indices.size(),
                         dealii::ExcMessage("Received source-value size mismatch."));
           }
